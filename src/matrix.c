@@ -30,7 +30,7 @@ void free_matrix(Matrix m) {
 void print_matrix(Matrix m) {
     for (int i = 0; i < m.rows; i++) {
         for (int j = 0; j < m.columns; j++) {
-            int index = i * m.rows + j;
+            int index = i * m.columns + j;
             printf("%.2f ", m.data[index]);
         }
         printf("\n");

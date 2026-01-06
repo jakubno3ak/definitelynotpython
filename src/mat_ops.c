@@ -12,7 +12,7 @@ Matrix mat_mul(Matrix a, Matrix b) {
     // L, N
     // N, B
 
-    //L, B
+    // L, B
     Matrix result = create_matrix(a.rows, b.columns);
 
     for (int i = 0; i < result.rows; i++) {
@@ -31,4 +31,36 @@ Matrix mat_mul(Matrix a, Matrix b) {
     }
 
     return result;
+}
+
+Matrix mat_transpose(Matrix m) {
+    Matrix t = create_matrix(m.columns, m.rows);
+
+    for (int i = 0; i < m.rows; i++) {
+        for (int j = 0; j < m.columns; j++) {
+            int src_idx = (i * m.columns) + j;
+            int dst_idx = (j * m.rows ) + i;
+
+            t.data[dst_idx] = m.data[src_idx];
+        }
+    }
+
+    return t;
+}
+
+void mat_scale(Matrix m, float n) {
+    for (int i = 0; i < m.rows * m.columns; i++) {
+        m.data[i] *= n;
+    }
+}
+
+void mat_add(Matrix a, Matrix b) {
+    if (a.rows != b.rows || a.columns != b.columns) {
+        fprintf(stderr, "Error: Dimension mismatch in add\n");
+        exit(1);
+    }
+    
+    for (int i = 0; i < a.rows * a.columns; i++) {
+        a.data[i] += b.data[i];
+    }
 }
