@@ -7,7 +7,7 @@ Matrix create_matrix(int rows, int columns) {
     m.rows = rows;
     m.columns = columns;
 
-    size_t matrix_size = rows * columns * sizeof(float);
+    size_t matrix_size = get_size(m) * sizeof(float);
 
     m.data = (float*)malloc(matrix_size);
 
@@ -17,6 +17,10 @@ Matrix create_matrix(int rows, int columns) {
     }
 
     return m;
+}
+
+int get_size(Matrix m) {
+    return m.rows * m.columns;
 }
 
 void free_matrix(Matrix m) {
@@ -30,5 +34,11 @@ void print_matrix(Matrix m) {
             printf("%.2f ", m.data[index]);
         }
         printf("\n");
+    }
+}
+
+void initialize_weights(Matrix m) {
+    for (int i = 0; i < get_size(m); i++) {
+        m.data[i] = (float)rand() / (float)RAND_MAX;
     }
 }
