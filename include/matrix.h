@@ -9,6 +9,7 @@ typedef struct {
 Matrix create_matrix(int rows, int columns);
 Matrix mat_mul(Matrix a, Matrix b);
 Matrix mat_transpose(Matrix m);
+Matrix matrix_add_bias(Matrix m);
 void mat_add(Matrix a, Matrix b);
 void mat_scale(Matrix m, float n);
 void free_matrix(Matrix m);

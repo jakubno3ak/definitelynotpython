@@ -4,22 +4,25 @@
 
 LinearRegression create_linear_regression(int input_features, int output_features, float learning_rate) {
     LinearRegression model;
-    model.W = create_matrix(input_features, output_features);
+    model.W = create_matrix(input_features + 1, output_features);
     initialize_weights(model.W);
     model.learning_rate = learning_rate;
     return model;
 }
 
 Matrix predict(LinearRegression model, Matrix inputs) {
-    return mat_mul(inputs, model.W);
+    Matrix InputWithBias = matrix_add_bias(inputs);
+    Matrix result = mat_mul(InputWithBias, model.W);
+    free_matrix(InputWithBias);
+    return result;
 }
 
 void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
     printf("--- LinearRegression: Fitting(%d epochs) ---\n", epochs);
-
-    Matrix Xt = mat_transpose(X);
+    Matrix X_bias = matrix_add_bias(X);
+    Matrix Xt = mat_transpose(X_bias);
     for (int i = 0; i <= epochs; i++) {
-        Matrix Pred = mat_mul(X, model -> W);
+        Matrix Pred = mat_mul(X_bias, model -> W);
         Matrix Err = create_matrix(Pred.rows, Pred.columns);
         for (int j = 0; j < get_size(Pred); j++) {
             Err.data[j] = Pred.data[j];
@@ -33,11 +36,20 @@ void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
         mat_add(model -> W, Grad);
 
         if (i % (epochs / 10) == 0) {
-            printf("Epoch %d | MSE Sample: %f\n", i, Err.data[0]);
+            float mse = 0.0;
+            for (int k = 0; k < Err.rows * Err.columns; k++) {
+                float diff = Err.data[k];
+                mse += diff * diff;
+            }
+            mse /= X.rows;
+            
+            printf("Epoch %d | MSE: %f\n", i, mse);
         }
 
         free_matrix(Pred); free_matrix(Err); free_matrix(Grad);
     }
 
+
+    free_matrix(X_bias);
     free_matrix(Xt);
 }

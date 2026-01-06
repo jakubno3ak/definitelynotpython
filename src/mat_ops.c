@@ -48,6 +48,21 @@ Matrix mat_transpose(Matrix m) {
     return t;
 }
 
+Matrix matrix_add_bias(Matrix m) {
+    int new_rows = m.rows;
+    int new_cols = m.columns + 1;
+    
+    Matrix b = create_matrix(new_rows, new_cols);
+
+    for (int i = 0; i < new_rows; i++) {
+        for (int j = 0; j < m.columns; j++) {
+            b.data[i * new_cols + j] = m.data[i * m.columns + j];
+        }
+        b.data[i * new_cols + m.columns] = 1.0f;
+    }
+    return b;
+}
+
 void mat_scale(Matrix m, float n) {
     for (int i = 0; i < m.rows * m.columns; i++) {
         m.data[i] *= n;

@@ -43,22 +43,22 @@ int main() {
     // free_matrix(T);
 
     srand(time(NULL));
-    Matrix X = create_matrix(3, 2);
-    X.data[0] = 1; X.data[1] = 1;
-    X.data[2] = 2; X.data[3] = 1;
-    X.data[4] = 3; X.data[5] = 1;
+    Matrix X = create_matrix(3, 1);
+    X.data[0] = 1; 
+    X.data[1] = 2;
+    X.data[2] = 3;
 
     Matrix Y = create_matrix(3, 1);
     Y.data[0] = 7; Y.data[1] = 9; Y.data[2] = 11;
 
-    LinearRegression model = create_linear_regression(2, 1, 0.01);
-    fit(&model, X, Y, 1000);
+    LinearRegression model = create_linear_regression(1, 1, 0.01);
+    fit(&model, X, Y, 10000);
 
     printf("\nLearned weights:\n");
     print_matrix(model.W);
 
-    Matrix TestX = create_matrix(1, 2);
-    TestX.data[0] = 5; TestX.data[1] = 1; 
+    Matrix TestX = create_matrix(1, 1);
+    TestX.data[0] = 5; 
     
     Matrix Result = predict(model, TestX);
     printf("For x=5 result: %f\n", Result.data[0]);
