@@ -42,4 +42,5 @@ int main() {
     free_matrix(model.W);
 
     return 0;
+}
 ```

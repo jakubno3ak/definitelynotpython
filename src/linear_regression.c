@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "../include/ops.h"
 #include "../include/linear_regression.h"
 
 LinearRegression create_linear_regression(int input_features, int output_features, float learning_rate) {
@@ -12,7 +13,7 @@ LinearRegression create_linear_regression(int input_features, int output_feature
 
 Matrix predict(LinearRegression model, Matrix inputs) {
     Matrix InputWithBias = matrix_add_bias(inputs);
-    Matrix result = mat_mul(InputWithBias, model.W);
+    Matrix result = ops_mat_mul(InputWithBias, model.W);
     free_matrix(InputWithBias);
     return result;
 }
@@ -22,7 +23,7 @@ void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
     Matrix X_bias = matrix_add_bias(X);
     Matrix Xt = mat_transpose(X_bias);
     for (int i = 0; i <= epochs; i++) {
-        Matrix Pred = mat_mul(X_bias, model -> W);
+        Matrix Pred = ops_mat_mul(X_bias, model -> W);
         Matrix Err = create_matrix(Pred.rows, Pred.columns);
         for (int j = 0; j < get_size(Pred); j++) {
             Err.data[j] = Pred.data[j];
@@ -31,7 +32,7 @@ void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
         mat_add(Err, Y);
         mat_scale(Y, -1.0);
 
-        Matrix Grad = mat_mul(Xt, Err);
+        Matrix Grad = ops_mat_mul(Xt, Err);
         mat_scale(Grad, -(model->learning_rate));
         mat_add(model -> W, Grad);
 
