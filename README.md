@@ -5,15 +5,44 @@ This is an ML-from-scratch-in-C playground focused on what high-level libraries 
 
 The long-term goal is to ship it as a small Python-friendly mini-framework — because after writing everything in C, it would be a shame not to call it from Python anyway.
 
-### Currently implemented
+## Supported backends
+The core logic uses a Dispatcher Pattern (ops.h), allowing the library to switch compute engines at runtime.
+
+- **Naive**: Standard single-threaded C loops (Baseline).
+
+- **OpenMP**: Multi-threaded CPU parallelization.
+
+- **CUDA**: GPU acceleration (Planned).
+
+- **BLAS**: Wrapper for OpenBLAS/MKL (Planned).
+
+### Benchmarks
+```markdown
+=== BENCHMARK START (Matrix Size: 1024x1024) ===
+Threads available: 2 - github workspaces ;]
+
+Running NAIVE backend
+NAIVE Time: 3.6847 seconds
+
+Running OPENMP backend
+OPENMP Time: 2.9390 seconds
+
+Speedup: 1.25x
+```
+
+### Currently implemented ML
 
 1. **Linear Regression**: via Batch Gradient Descent
 ```c
 #include <stdio.h>
 #include "include/matrix.h"
 #include "include/linear_regression.h"
+#include "include/ops.h"
 
 int main() {
+    // Optional: Switch compute backend (Default is NAIVE)
+    // ops_set_backend(BACKEND_OMP);
+
     // 1. Data Preparation (Target: y = 2x + 5)
     Matrix X = create_matrix(3, 1);
     X.data[0] = 1; X.data[1] = 2; X.data[2] = 3;
