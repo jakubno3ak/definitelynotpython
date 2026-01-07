@@ -3,6 +3,7 @@
 #include "../include/ops.h"
 
 Matrix mat_mul_naive(Matrix A, Matrix B);
+Matrix mat_mul_omp(Matrix A, Matrix B);
 
 static ComputeBackend CURRENT_BACKEND = BACKEND_NAIVE;
 
@@ -24,8 +25,7 @@ char* ops_get_backend_name() {
 Matrix ops_mat_mul(Matrix A, Matrix B) {
     switch (CURRENT_BACKEND) {
         case BACKEND_OMP:
-            fprintf(stderr, "OpenMP not implemented yet. Fallback to Naive.\n");
-            return mat_mul_naive(A, B);
+            return mat_mul_omp(A, B);
             
         case BACKEND_CUDA:
             fprintf(stderr, "CUDA not implemented yet. Fallback to Naive.\n");

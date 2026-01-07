@@ -3,6 +3,7 @@
 #include <time.h>
 #include "include/matrix.h"
 #include "include/linear_regression.h"
+#include "include/ops.h"
 
 int main() {
     // Matrix X = create_matrix(5, 7);
@@ -43,6 +44,9 @@ int main() {
     // free_matrix(T);
 
     srand(time(NULL));
+
+    ops_set_backend(BACKEND_OMP);
+
     Matrix X = create_matrix(3, 1);
     X.data[0] = 1; 
     X.data[1] = 2;
