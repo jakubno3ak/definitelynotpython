@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #ifndef MATRIX_H
 #define MATRIX_H
 
@@ -26,6 +27,6 @@ void normalize_matrix_min_max(Matrix* m);
 void slice_matrix(int inputs_features, int output_features, Matrix *m, Matrix *X, Matrix *y);
 int get_size(Matrix m);
 
-DataSplit train_test_split(Matrix *X, Matrix *y, float test_size);
+DataSplit train_test_split(Matrix *X, Matrix *y, float test_size, bool shuffle);
 
 #endif

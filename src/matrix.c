@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include <float.h>
+#include <stdbool.h>
 #include "../include/matrix.h"
 
 Matrix create_matrix(int rows, int columns) {
@@ -187,8 +188,36 @@ void slice_matrix(int inputs_features, int output_features, Matrix *m, Matrix *X
     }
 }
 
+void shuffle_samples(Matrix *X, Matrix *y) {
+    if (X->rows != y->rows) {
+        fprintf(stderr, "Error: X and y rows mismatch in shuffle!\n");
+        exit(1);
+    }
 
-DataSplit train_test_split(Matrix *X, Matrix *y, float test_size) {
+    int n = X -> rows;
+    int columns = X -> columns;
+
+    for (int i = n - 1; i > 0; i--) {
+        int j = rand() & (i + 1);
+
+        float temp_y = y -> data[i];
+        y -> data[i] = y -> data[j];
+        y -> data[j] = temp_y;
+
+        for (int k = 0; k < columns; k ++) {
+            float temp_x = X -> data[i * columns + k];
+            X -> data[i * columns + k] = X -> data[j * columns + k];
+            X -> data[j * columns + k] = temp_x;
+        }
+    }
+}
+
+
+DataSplit train_test_split(Matrix *X, Matrix *y, float test_size, bool shuffle) {
+    if (shuffle) {
+        shuffle_samples(X, y);
+    }
+    
     DataSplit split;
 
     int n = X -> rows;
