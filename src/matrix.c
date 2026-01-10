@@ -181,3 +181,7 @@ void normalize_matrix_min_max(Matrix *m) {
 void slice_matrix(int inputs_features, int output_features, Matrix m, Matrix *X, Matrix *y) {
 
 }
+
+void train_test_split(Matrix X, Matrix y, Matrix *X_train, Matrix *X_test, Matrix *y_train, Matrix *y_test) {
+
+}
