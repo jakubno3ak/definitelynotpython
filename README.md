@@ -36,6 +36,7 @@ Speedup: 1.25x
 ```c
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "include/matrix.h"
 #include "include/linear_regression.h"
 #include "include/ops.h"
@@ -60,7 +61,7 @@ int main() {
     printf("--- 2. Normalizing X ---\n");
     normalize_matrix_min_max(&X);
 
-    DataSplit split = train_test_split(&X, &y, 0.2);
+    DataSplit split = train_test_split(&X, &y, 0.2, true);
 
     printf("--- 3. Training Model ---\n");
     LinearRegression model = create_linear_regression(input_cols, 1, 0.01);
