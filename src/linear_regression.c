@@ -33,6 +33,7 @@ void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
         mat_scale(Y, -1.0);
 
         Matrix Grad = ops_mat_mul(Xt, Err);
+        mat_scale(Grad, 1.0f / X.rows);
         mat_scale(Grad, -(model->learning_rate));
         mat_add(model -> W, Grad);
 

@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <float.h>
 #include "../include/matrix.h"
 
 Matrix create_matrix(int rows, int columns) {
@@ -16,6 +19,60 @@ Matrix create_matrix(int rows, int columns) {
         exit(1);
     }
 
+    return m;
+}
+
+Matrix create_matrix_from_csv(const char* filename) {
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Error: Could not open file %s\n", filename);
+        exit(1);
+    }
+
+    int rows = 0;
+    int columns = 0;
+    char buffer[10240];
+
+    if (fgets(buffer, sizeof(buffer), fp)) {
+        rows++;
+        
+        char temp_buffer[10240];
+        strcpy(temp_buffer, buffer);
+
+        char* token = strtok(temp_buffer, ",");
+        while (token) {
+            columns++;
+            token = strtok(NULL, ",");
+        }
+    }
+
+    while (fgets(buffer, sizeof(buffer), fp)) {
+        rows++;
+    }
+
+    printf("CSV Loader: Detected %d rows, %d columns\n", rows, columns);
+
+    Matrix m = create_matrix(rows - 1, columns);
+    rewind(fp);
+
+    fgets(buffer, sizeof(buffer), fp);
+
+    int i = 0;
+    while (fgets(buffer, sizeof(buffer), fp)) {
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        int j = 0;
+        char* token = strtok(buffer, ",");
+
+        while (token && j < columns) {
+            m.data[i * columns + j] = atof(token);
+            token = strtok(NULL, ",");
+            j++;
+        }
+        i++;
+    }
+
+    fclose(fp);
     return m;
 }
 
@@ -87,5 +144,36 @@ void mat_add(Matrix a, Matrix b) {
     
     for (int i = 0; i < a.rows * a.columns; i++) {
         a.data[i] += b.data[i];
+    }
+}
+
+void normalize_matrix_min_max(Matrix *m) {
+    for (int j = 0; j < m -> columns; j++) {
+        float min = FLT_MAX;
+        float max = -FLT_MAX;
+
+        for (int i = 0; i < m -> rows; i++) {
+            int column_idx = i * m -> columns + j;
+            float val = m -> data[column_idx];
+            
+            if (val <= min) {
+                min = val;
+            }
+
+            if (val >= max) {
+                max = val;
+            }
+        }
+
+        float range = max - min;
+        if (range < 0.00001) {
+            range = 1.0;
+        }
+
+        for (int i = 0; i < m -> rows; i++) {
+            int column_idx = i * m -> columns + j;
+            float val = m -> data[column_idx];
+            m -> data[column_idx] = (val - min) / range;
+        }
     }
 }
