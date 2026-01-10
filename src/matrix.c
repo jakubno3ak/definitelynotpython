@@ -177,3 +177,7 @@ void normalize_matrix_min_max(Matrix *m) {
         }
     }
 }
+
+void slice_matrix(int inputs_features, int output_features, Matrix m, Matrix *X, Matrix *y) {
+
+}
