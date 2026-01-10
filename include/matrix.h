@@ -6,6 +6,13 @@ typedef struct {
     int rows, columns;
 } Matrix;
 
+typedef struct {
+    Matrix X_train;
+    Matrix y_train;
+    Matrix X_test;
+    Matrix y_test;
+} DataSplit;
+
 Matrix create_matrix(int rows, int columns);
 Matrix mat_transpose(Matrix m);
 Matrix matrix_add_bias(Matrix m);
@@ -16,8 +23,9 @@ void free_matrix(Matrix m);
 void print_matrix(Matrix m);
 void initialize_weights(Matrix m);
 void normalize_matrix_min_max(Matrix* m);
-void train_test_split(Matrix X, Matrix y, Matrix *X_train, Matrix *X_test, Matrix *y_train, Matrix *y_test);
-void slice_matrix(int inputs_features, int output_features, Matrix m, Matrix *X, Matrix *y);
+void slice_matrix(int inputs_features, int output_features, Matrix *m, Matrix *X, Matrix *y);
 int get_size(Matrix m);
+
+DataSplit train_test_split(Matrix *X, Matrix *y, float test_size);
 
 #endif

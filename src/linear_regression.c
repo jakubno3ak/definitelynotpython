@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "../include/ops.h"
 #include "../include/linear_regression.h"
 
@@ -54,4 +55,31 @@ void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
 
     free_matrix(X_bias);
     free_matrix(Xt);
+}
+
+void validate(LinearRegression model, Matrix X_test, Matrix y_test) {
+    Matrix predictions = predict(model, X_test);
+
+    float total_mse = 0.0f;
+    float total_mae = 0.0f;
+    int n = X_test.rows;
+
+    for (int i = 0; i < n; i++) {
+        float pred = predictions.data[i];
+        float actual = y_test.data[i];
+        
+        float diff = pred - actual;
+        
+        total_mse += diff * diff;
+        total_mae += fabsf(diff); 
+    }
+
+    float mse = total_mse / n;
+    float mae = total_mae / n;
+
+    printf("\n--- Validation Results (on %d unseen samples) ---\n", n);
+    printf("MSE: %.4f\n", mse);
+    printf("MAE: %.4f k$ (Average Error: ~%.0f$)\n", mae, mae * 1000);
+
+    free_matrix(predictions);
 }

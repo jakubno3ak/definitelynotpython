@@ -178,10 +178,42 @@ void normalize_matrix_min_max(Matrix *m) {
     }
 }
 
-void slice_matrix(int inputs_features, int output_features, Matrix m, Matrix *X, Matrix *y) {
-
+void slice_matrix(int inputs_features, int output_features, Matrix *m, Matrix *X, Matrix *y) {
+    for (int i = 0; i < X->rows; i++) {
+        for (int j = 0; j < inputs_features; j++) {
+            X->data[i * X->columns + j] = m->data[i * m->columns + j];
+        }
+        y->data[i] = m->data[i * m->columns + inputs_features];
+    }
 }
 
-void train_test_split(Matrix X, Matrix y, Matrix *X_train, Matrix *X_test, Matrix *y_train, Matrix *y_test) {
 
+DataSplit train_test_split(Matrix *X, Matrix *y, float test_size) {
+    DataSplit split;
+
+    int n = X -> rows;
+    int test_rows = (int)(n * test_size);
+    int train_rows = n - test_rows;
+
+    split.X_train = create_matrix(train_rows, X -> columns);
+    split.y_train = create_matrix(train_rows, 1);
+    split.X_test  = create_matrix(test_rows, X -> columns);
+    split.y_test  = create_matrix(test_rows, 1);
+
+    for (int i = 0; i < train_rows; i++) {
+       for (int j = 0; j < X -> columns; j++) {
+        split.X_train.data[i * X -> columns + j] = X -> data[i * X -> columns + j];
+       }
+       split.y_train.data[i] = y -> data[i];
+    }
+
+    for (int i = 0; i < test_rows; i ++) {
+        int src_idx = i + train_rows;
+        for (int j = 0; j < X -> columns; j++) {
+            split.X_test.data[i * X -> columns + j] = X -> data[src_idx * X -> columns + j];
+        }
+        split.y_test.data[i] = y ->data [src_idx];
+    }
+
+    return split;
 }
