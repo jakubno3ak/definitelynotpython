@@ -26,6 +26,7 @@ void initialize_weights(Matrix m);
 void normalize_matrix_min_max(Matrix *m);
 void slice_matrix(int inputs_features, int output_features, Matrix *m,
                   Matrix *X, Matrix *y);
+void mat_apply(Matrix *m, float (*func)(float));
 int get_size(Matrix m);
 
 DataSplit train_test_split(Matrix *X, Matrix *y, float test_size, bool shuffle);

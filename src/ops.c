@@ -1,4 +1,5 @@
 #include "../include/ops.h"
+#include <math.h>
 #include <stdio.h>
 
 Matrix mat_mul_naive(Matrix A, Matrix B);
@@ -40,3 +41,5 @@ Matrix ops_mat_mul(Matrix A, Matrix B) {
     return mat_mul_naive(A, B);
   }
 }
+
+float sigmoid(float x) { return 1 / (1 + exp(-x)); }

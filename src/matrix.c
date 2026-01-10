@@ -242,3 +242,9 @@ DataSplit train_test_split(Matrix *X, Matrix *y, float test_size,
 
   return split;
 }
+
+void mat_apply(Matrix *m, float (*func)(float)) {
+  for (int i = 0; i < get_size(*m); i++) {
+    m->data[i] = func(m->data[i]);
+  }
+}

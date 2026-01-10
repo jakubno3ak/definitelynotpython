@@ -15,4 +15,6 @@ char *ops_get_backend_name();
 
 Matrix ops_mat_mul(Matrix A, Matrix B);
 
+float sigmoid(float x);
+
 #endif
