@@ -1,74 +1,42 @@
+#include "include/linear_regression.h"
+#include "include/matrix.h"
+#include "include/ops.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "include/matrix.h"
-#include "include/linear_regression.h"
-#include "include/ops.h"
 
 int main() {
-    // Matrix X = create_matrix(5, 7);
-    // initialize_weights(X);
-    // printf("Matrix X:\n");
-    // print_matrix(X);
+  srand(time(NULL));
 
-    // Matrix W = create_matrix(7, 10);
-    // initialize_weights(W);
-    // printf("\nMatrix W:\n");
-    // print_matrix(W);
+  ops_set_backend(BACKEND_OMP);
 
-    // printf("\nMatMul(Y = X * W):\n");
-    // Matrix Y = mat_mul(X, W);
-    // print_matrix(Y);
+  Matrix X = create_matrix(3, 1);
+  X.data[0] = 1;
+  X.data[1] = 2;
+  X.data[2] = 3;
 
-    // free_matrix(X);
-    // free_matrix(W);
-    // free_matrix(Y);
+  Matrix Y = create_matrix(3, 1);
+  Y.data[0] = 7;
+  Y.data[1] = 9;
+  Y.data[2] = 11;
 
+  LinearRegression model = create_linear_regression(1, 1, 0.01);
+  fit(&model, X, Y, 10000);
 
-    // Matrix A = create_matrix(2, 3);
-    // A.data[0] = 1; A.data[1] = 2; A.data[2] = 3;
-    // A.data[3] = 4; A.data[4] = 5; A.data[5] = 6;
+  printf("\nLearned weights:\n");
+  print_matrix(model.W);
 
-    // printf("A (2x3):\n");
-    // print_matrix(A);
+  Matrix TestX = create_matrix(1, 1);
+  TestX.data[0] = 5;
 
-    // Matrix T = mat_transpose(A);
-    // printf("\nTransposed A (3x2):\n");
-    // print_matrix(T);
+  Matrix Result = predict(model, TestX);
+  printf("For x=5 result: %f\n", Result.data[0]);
 
-    // mat_scale(T, 10.0);
-    // printf("\nScaled Transposed A (*10):\n");
-    // print_matrix(T);
+  free_matrix(X);
+  free_matrix(Y);
+  free_matrix(TestX);
+  free_matrix(Result);
+  free_matrix(model.W);
 
-    // free_matrix(A);
-    // free_matrix(T);
-
-    srand(time(NULL));
-
-    ops_set_backend(BACKEND_OMP);
-
-    Matrix X = create_matrix(3, 1);
-    X.data[0] = 1; 
-    X.data[1] = 2;
-    X.data[2] = 3;
-
-    Matrix Y = create_matrix(3, 1);
-    Y.data[0] = 7; Y.data[1] = 9; Y.data[2] = 11;
-
-    LinearRegression model = create_linear_regression(1, 1, 0.01);
-    fit(&model, X, Y, 10000);
-
-    printf("\nLearned weights:\n");
-    print_matrix(model.W);
-
-    Matrix TestX = create_matrix(1, 1);
-    TestX.data[0] = 5; 
-    
-    Matrix Result = predict(model, TestX);
-    printf("For x=5 result: %f\n", Result.data[0]);
-
-    free_matrix(X); free_matrix(Y); free_matrix(TestX); free_matrix(Result);
-    free_matrix(model.W);
-
-    return 0;
+  return 0;
 }

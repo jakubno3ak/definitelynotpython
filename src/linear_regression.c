@@ -1,85 +1,87 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include "../include/ops.h"
 #include "../include/linear_regression.h"
+#include "../include/ops.h"
+#include <math.h>
+#include <stdio.h>
 
-LinearRegression create_linear_regression(int input_features, int output_features, float learning_rate) {
-    LinearRegression model;
-    model.W = create_matrix(input_features + 1, output_features);
-    initialize_weights(model.W);
-    model.learning_rate = learning_rate;
-    return model;
+LinearRegression create_linear_regression(int input_features,
+                                          int output_features,
+                                          float learning_rate) {
+  LinearRegression model;
+  model.W = create_matrix(input_features + 1, output_features);
+  initialize_weights(model.W);
+  model.learning_rate = learning_rate;
+  return model;
 }
 
 Matrix predict(LinearRegression model, Matrix inputs) {
-    Matrix InputWithBias = matrix_add_bias(inputs);
-    Matrix result = ops_mat_mul(InputWithBias, model.W);
-    free_matrix(InputWithBias);
-    return result;
+  Matrix InputWithBias = matrix_add_bias(inputs);
+  Matrix result = ops_mat_mul(InputWithBias, model.W);
+  free_matrix(InputWithBias);
+  return result;
 }
 
 void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
-    printf("--- LinearRegression: Fitting(%d epochs) ---\n", epochs);
-    Matrix X_bias = matrix_add_bias(X);
-    Matrix Xt = mat_transpose(X_bias);
-    for (int i = 0; i <= epochs; i++) {
-        Matrix Pred = ops_mat_mul(X_bias, model -> W);
-        Matrix Err = create_matrix(Pred.rows, Pred.columns);
-        for (int j = 0; j < get_size(Pred); j++) {
-            Err.data[j] = Pred.data[j];
-        }
-        mat_scale(Y, -1.0);
-        mat_add(Err, Y);
-        mat_scale(Y, -1.0);
+  printf("--- LinearRegression: Fitting(%d epochs) ---\n", epochs);
+  Matrix X_bias = matrix_add_bias(X);
+  Matrix Xt = mat_transpose(X_bias);
+  for (int i = 0; i <= epochs; i++) {
+    Matrix Pred = ops_mat_mul(X_bias, model->W);
+    Matrix Err = create_matrix(Pred.rows, Pred.columns);
+    for (int j = 0; j < get_size(Pred); j++) {
+      Err.data[j] = Pred.data[j];
+    }
+    mat_scale(Y, -1.0);
+    mat_add(Err, Y);
+    mat_scale(Y, -1.0);
 
-        Matrix Grad = ops_mat_mul(Xt, Err);
-        mat_scale(Grad, 1.0f / X.rows);
-        mat_scale(Grad, -(model->learning_rate));
-        mat_add(model -> W, Grad);
+    Matrix Grad = ops_mat_mul(Xt, Err);
+    mat_scale(Grad, 1.0f / X.rows);
+    mat_scale(Grad, -(model->learning_rate));
+    mat_add(model->W, Grad);
 
-        if (i % (epochs / 10) == 0) {
-            float mse = 0.0;
-            for (int k = 0; k < Err.rows * Err.columns; k++) {
-                float diff = Err.data[k];
-                mse += diff * diff;
-            }
-            mse /= X.rows;
-            
-            printf("Epoch %d | MSE: %f\n", i, mse);
-        }
+    if (i % (epochs / 10) == 0) {
+      float mse = 0.0;
+      for (int k = 0; k < Err.rows * Err.columns; k++) {
+        float diff = Err.data[k];
+        mse += diff * diff;
+      }
+      mse /= X.rows;
 
-        free_matrix(Pred); free_matrix(Err); free_matrix(Grad);
+      printf("Epoch %d | MSE: %f\n", i, mse);
     }
 
+    free_matrix(Pred);
+    free_matrix(Err);
+    free_matrix(Grad);
+  }
 
-    free_matrix(X_bias);
-    free_matrix(Xt);
+  free_matrix(X_bias);
+  free_matrix(Xt);
 }
 
 void validate(LinearRegression model, Matrix X_test, Matrix y_test) {
-    Matrix predictions = predict(model, X_test);
+  Matrix predictions = predict(model, X_test);
 
-    float total_mse = 0.0f;
-    float total_mae = 0.0f;
-    int n = X_test.rows;
+  float total_mse = 0.0f;
+  float total_mae = 0.0f;
+  int n = X_test.rows;
 
-    for (int i = 0; i < n; i++) {
-        float pred = predictions.data[i];
-        float actual = y_test.data[i];
-        
-        float diff = pred - actual;
-        
-        total_mse += diff * diff;
-        total_mae += fabsf(diff); 
-    }
+  for (int i = 0; i < n; i++) {
+    float pred = predictions.data[i];
+    float actual = y_test.data[i];
 
-    float mse = total_mse / n;
-    float mae = total_mae / n;
+    float diff = pred - actual;
 
-    printf("\n--- Validation Results (on %d unseen samples) ---\n", n);
-    printf("MSE: %.4f\n", mse);
-    printf("MAE: %.4f k$ (Average Error: ~%.0f$)\n", mae, mae * 1000);
+    total_mse += diff * diff;
+    total_mae += fabsf(diff);
+  }
 
-    free_matrix(predictions);
+  float mse = total_mse / n;
+  float mae = total_mae / n;
+
+  printf("\n--- Validation Results (on %d unseen samples) ---\n", n);
+  printf("MSE: %.4f\n", mse);
+  printf("MAE: %.4f k$ (Average Error: ~%.0f$)\n", mae, mae * 1000);
+
+  free_matrix(predictions);
 }
