@@ -14,4 +14,9 @@ LinearRegression create_linear_regression(int input_features,
 void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs);
 Matrix predict(LinearRegression model, Matrix input);
 void validate(LinearRegression model, Matrix X_test, Matrix y_test);
+
+void fit_logistic(LinearRegression *model, Matrix X, Matrix Y, int epochs);
+Matrix predict_proba(LinearRegression model, Matrix X);
+Matrix predict_class(LinearRegression model, Matrix X);
+
 #endif
