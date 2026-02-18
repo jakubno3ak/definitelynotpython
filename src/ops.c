@@ -43,10 +43,7 @@ Matrix ops_mat_mul(Matrix A, Matrix B) {
 }
 
 float sigmoid(float x) { return 1 / (1 + exp(-x)); }
-float relu(float x) {
-  if (x < 0) {
-    return 0;
-  }
+float relu(float x) { return x < 0 ? 0 : x; }
 
-  return x;
-}
+float sigmoid_prime(float activated_x) { return (activated_x * (1.0f - activated_x)); }
+float relu_prime(float activated_x) { return activated_x > 0 ? 1.0f : 0.0f;  }

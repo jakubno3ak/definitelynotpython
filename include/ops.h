@@ -18,4 +18,7 @@ Matrix ops_mat_mul(Matrix A, Matrix B);
 float sigmoid(float x);
 float relu(float x);
 
+float sigmoid_prime(float activated_x);
+float relu_prime(float activated_x);
+
 #endif

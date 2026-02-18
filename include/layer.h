@@ -21,6 +21,7 @@ typedef struct {
 
 Layer create_layer(int input_size, int output_size, ActivationType activation);
 Matrix layer_forward(Layer *layer, Matrix input);
+Matrix layer_backward(Layer *layer, Matrix upstream_grad, float learning_rate);
 void layer_free(Layer *layer);
 
 #endif
