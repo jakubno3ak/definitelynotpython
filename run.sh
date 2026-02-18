@@ -37,7 +37,7 @@ gcc -O3 "$SOURCE_FILE" \
     src/*.c \
     src/backends/*.c \
     -I. -I./include \
-    -lm -fopenmp \
+    -lm -fopenmp -lopenblas \
     -o "$OUTPUT_NAME"
 
 # Execute if compilation succeeded

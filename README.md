@@ -19,18 +19,39 @@ The core logic uses a Dispatcher Pattern (ops.h), allowing the library to switch
 - CUDA: GPU acceleration (Planned).
 - BLAS: Wrapper for OpenBLAS/MKL (Planned).
 
-### Benchmarks
+To enable <b>BLAS</b> (Basic Linear Algebra Subprograms) run: 
+
+```bash
+sudo apt-get update
+sudo apt-get install libopenblas-dev
+```
+
+### Benchmarks - for now only for matrix multiplication
 ```markdown
 === BENCHMARK START (Matrix Size: 1024x1024) ===
-Threads available: 2 - github workspaces ;]
+Threads available: 2
 
-Running NAIVE backend
-NAIVE Time: 3.6847 seconds
+Running NAIVE backend...
+--- Backend switched to: Naive (Single Thread) ---
+NAIVE Time: 3.9615 seconds
 
-Running OPENMP backend
-OPENMP Time: 2.9390 seconds
+Running OPENMP backend...
+--- Backend switched to: OpenMP (Multi Thread) ---
+OPENMP Time: 3.4465 seconds
+Verification PASSED for OPENMP
 
-Speedup: 1.25x
+Running BLAS backend...
+--- Backend switched to: BLAS (Optimized) ---
+BLAS Time: 0.0291 seconds
+Verification FAILED for BLAS at index 0 (Ref: 264.159363, Test: 264.159241)
+
+------------------------------------------------
+FINAL RESULTS SUMMARY (Reference: Naive)
+OPENMP Speedup: 1.15x
+BLAS   Speedup: 135.98x
+BLAS vs OPENMP: 118.30x faster
+------------------------------------------------
+--- Done ---
 ```
 
 ### Build and run
