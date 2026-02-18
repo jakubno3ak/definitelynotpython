@@ -46,3 +46,9 @@ The train_test_split function performs two critical tasks:
 **Shuffling**: Randomizes the order of rows to ensure the model doesn't learn patterns based on the data's entry order.
 
 **Partitioning**: Allocates a percentage of data for validation to monitor the model's performance on unseen data.
+
+#### Softmax
+
+* [Explanation](./ops/softmax.md)
+* [Definition](../../include/ops.h)
+* [Implementation](../../src/ops.c)

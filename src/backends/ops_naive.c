@@ -1,6 +1,8 @@
-#include "../../include/matrix.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include "../../include/matrix.h"
+#include "../../include/ops_kernels.h"
 
 // O(n^3)
 Matrix mat_mul_naive(Matrix A, Matrix B) {
@@ -22,4 +24,32 @@ Matrix mat_mul_naive(Matrix A, Matrix B) {
     }
   }
   return C;
+}
+
+void relu_naive(Matrix *m) {
+    APPLY_KERNEL_NAIVE(m, KERNEL_RELU);
+}
+
+void relu_prime_naive(Matrix *m) {
+    APPLY_KERNEL_NAIVE(m, KERNEL_RELU_PRIME);
+}
+
+void sigmoid_naive(Matrix *m) {
+    APPLY_KERNEL_NAIVE(m, KERNEL_SIGMOID);
+}
+
+void sigmoid_prime_naive(Matrix *m) {
+    APPLY_KERNEL_NAIVE(m, KERNEL_SIGMOID_PRIME);
+}
+
+void softmax_naive(Matrix *m) {
+    for (int i = 0; i < m->rows; i++) {
+        kernel_softmax_row(&m->data[i * m->columns], m->columns);
+    }
+}
+
+void add_bias_naive(Matrix *m, Matrix *bias) {
+    for (int i = 0; i < m->rows; i++) {
+        kernel_add_bias(&m->data[i * m->columns], bias->data, m->columns);
+    }
 }

@@ -1,8 +1,9 @@
-#include <omp.h>
 #include <stdio.h>
-#include <stdlib.h>
-
+#include <stdlib.h> 
+#include <omp.h>
+#include <math.h>
 #include "../../include/matrix.h"
+#include "../../include/ops_kernels.h"
 
 Matrix mat_mul_omp(Matrix A, Matrix B) {
   if (A.columns != B.rows) {
@@ -23,4 +24,35 @@ Matrix mat_mul_omp(Matrix A, Matrix B) {
     }
   }
   return C;
+}
+
+
+void relu_omp(Matrix *m) {
+    APPLY_KERNEL_OMP(m, KERNEL_RELU);
+}
+
+void relu_prime_omp(Matrix *m) {
+    APPLY_KERNEL_OMP(m, KERNEL_RELU_PRIME);
+}
+
+void sigmoid_omp(Matrix *m) {
+    APPLY_KERNEL_OMP(m, KERNEL_SIGMOID);
+}
+
+void sigmoid_prime_omp(Matrix *m) {
+    APPLY_KERNEL_OMP(m, KERNEL_SIGMOID_PRIME);
+}
+
+void softmax_omp(Matrix *m) {
+    #pragma omp parallel for
+    for (int i = 0; i < m->rows; i++) {
+        kernel_softmax_row(&m->data[i * m->columns], m->columns);
+    }
+}
+
+void add_bias_omp(Matrix *m, Matrix *bias) {
+    #pragma omp parallel for
+    for (int i = 0; i < m->rows; i++) {
+        kernel_add_bias(&m->data[i * m->columns], bias->data, m->columns);
+    }
 }

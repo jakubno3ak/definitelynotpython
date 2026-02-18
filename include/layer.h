@@ -6,7 +6,8 @@
 typedef enum {
     ACT_RELU,
     ACT_SIGMOID,
-    ACT_LINEAR
+    ACT_LINEAR,
+    ACT_SOFTMAX
 } ActivationType;
 
 typedef struct {

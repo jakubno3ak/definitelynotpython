@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "include/ops.h"
 #include "include/layer.h"
+#include "include/ops_kernels.h"
 
 Layer create_layer(int input_size, int output_size, ActivationType activation) {
     Layer layer;
@@ -23,20 +24,14 @@ Layer create_layer(int input_size, int output_size, ActivationType activation) {
 
 Matrix layer_forward(Layer *layer, Matrix input) {
     Matrix Z = ops_mat_mul(input, layer->weights);
+    ops_add_bias(&Z, &layer->biases);
 
-    for (int i = 0; i < Z.rows; i++) {
-        for (int j = 0; j < Z.columns; j++) {
-            int z_idx = i * Z.columns + j;
-            float bias_val = layer->biases.data[j]; 
-            Z.data[z_idx] += bias_val;
-        }
-    }
-
-    float sample_before = Z.data[0];
     if (layer->activation == ACT_SIGMOID) {
-        mat_apply(&Z, sigmoid);
+        ops_sigmoid(&Z);
     } else if (layer->activation == ACT_RELU) {
-        mat_apply(&Z, relu);
+        ops_relu(&Z);
+    } else if (layer->activation == ACT_SOFTMAX) {
+        ops_softmax(&Z);
     }
     
     layer->input_cache = input;
@@ -47,16 +42,23 @@ Matrix layer_forward(Layer *layer, Matrix input) {
 
 Matrix layer_backward(Layer *layer, Matrix upstream_grad, float learning_rate) {
     Matrix dZ = create_matrix(upstream_grad.rows, upstream_grad.columns);
+    int size = get_size(dZ);
     
-    for (int i = 0; i < upstream_grad.rows * upstream_grad.columns; i++) {
-        float grad = upstream_grad.data[i];
-        float out  = layer->output_cache.data[i];
-        float derivative = 1.0f;
-
-        if (layer->activation == ACT_SIGMOID) derivative = sigmoid_prime(out);
-        else if (layer->activation == ACT_RELU) derivative = relu_prime(out);
-    
-        dZ.data[i] = grad * derivative;
+    if (layer->activation == ACT_SIGMOID) {
+        #pragma omp parallel for
+        for (int i = 0; i < size; i++) {
+            dZ.data[i] = upstream_grad.data[i] * KERNEL_SIGMOID_PRIME(layer->output_cache.data[i]);
+        }
+    } else if (layer->activation == ACT_RELU) {
+        #pragma omp parallel for
+        for (int i = 0; i < size; i++) {
+            dZ.data[i] = upstream_grad.data[i] * KERNEL_RELU_PRIME(layer->output_cache.data[i]);
+        }
+    } else {
+        #pragma omp parallel for
+        for (int i = 0; i < size; i++) {
+            dZ.data[i] = upstream_grad.data[i];
+        }
     }
 
     Matrix input_T = mat_transpose(layer->input_cache);

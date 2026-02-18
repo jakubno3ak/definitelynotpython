@@ -13,12 +13,34 @@ typedef enum {
 void ops_set_backend(ComputeBackend backend);
 char *ops_get_backend_name();
 
+// mat mul
+Matrix mat_mul_naive(Matrix A, Matrix B);
+Matrix mat_mul_omp(Matrix A, Matrix B);
+Matrix mat_mul_blas(Matrix A, Matrix B);
 Matrix ops_mat_mul(Matrix A, Matrix B);
 
-float sigmoid(float x);
-float relu(float x);
+// add bias
+void add_bias_naive(Matrix *m, Matrix *bias);
+void add_bias_omp(Matrix *m, Matrix *bias);
+void ops_add_bias(Matrix *m, Matrix *bias);
 
-float sigmoid_prime(float activated_x);
-float relu_prime(float activated_x);
+// activations & derivates
+void relu_naive(Matrix *m);
+void relu_omp(Matrix *m);
+void relu_prime_naive(Matrix *m);
+void relu_prime_omp(Matrix *m);
+void ops_relu(Matrix *m);
+void ops_relu_prime(Matrix *m);
+
+void sigmoid_naive(Matrix *m);
+void sigmoid_omp(Matrix *m);
+void sigmoid_prime_naive(Matrix *m);
+void sigmoid_prime_omp(Matrix *m);
+void ops_sigmoid(Matrix *m);
+void ops_sigmoid_prime(Matrix *m);
+
+void softmax_naive(Matrix *m);
+void softmax_omp(Matrix *m);
+void ops_softmax(Matrix *m);
 
 #endif
