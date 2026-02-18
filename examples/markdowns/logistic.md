@@ -35,3 +35,4 @@ int main() {
     // ... (rest of free_matrix calls) ...
     return 0;
 }
+```

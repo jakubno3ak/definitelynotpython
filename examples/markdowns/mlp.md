@@ -1,3 +1,8 @@
+# Neural Layers (Manual MLP) Implementation
+
+Advanced Multi-Layer Perceptron architecture with manual backpropagation.
+
+```c
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -84,3 +89,4 @@ int main() {
 
     return 0;
 }
+```

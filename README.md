@@ -6,10 +6,10 @@ This is an ML-from-scratch-in-C playground focused on what high-level libraries 
 The long-term goal is to ship it as a small Python-friendly mini-framework — because after writing everything in C, it would be a shame not to call it from Python anyway.
 
 ## Quick Navigation
-- [Linear Regression](markdowns/linear.md) - Classic BGD on Boston Housing dataset.
-- [Logistic Regression](markdowns/logistic.md) - Binary classification with Sigmoid.
-- [Neural Layers (MLP)](markdowns/mlp.md) - Deep learning building blocks and Manual Backpropagation.
-- [Data Helpers](markdowns/helpers.md) - Normalization, Train/Test splitting, and Shuffling logic.
+- [Linear Regression](examples/markdowns/linear.md) - Classic BGD on Boston Housing dataset.
+- [Logistic Regression](examples/markdowns/logistic.md) - Binary classification with Sigmoid.
+- [Neural Layers (MLP)](examples/markdowns/mlp.md) - Deep learning building blocks and Manual Backpropagation.
+- [Data Helpers](examples/markdowns/helpers.md) - Normalization, Train/Test splitting, and Shuffling logic.
 
 ## Supported backends
 The core logic uses a Dispatcher Pattern (ops.h), allowing the library to switch compute engines at runtime.
