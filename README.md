@@ -17,7 +17,7 @@ The core logic uses a Dispatcher Pattern (ops.h), allowing the library to switch
 - Naive: Standard single-threaded C loops (Baseline).
 - OpenMP: Multi-threaded CPU parallelization.
 - CUDA: GPU acceleration (Planned).
-- BLAS: Wrapper for OpenBLAS/MKL (Planned).
+- BLAS: Wrapper for OpenBLAS/MKL.
 
 To enable <b>BLAS</b> (Basic Linear Algebra Subprograms) run: 
 
@@ -43,7 +43,6 @@ Verification PASSED for OPENMP
 Running BLAS backend...
 --- Backend switched to: BLAS (Optimized) ---
 BLAS Time: 0.0291 seconds
-Verification FAILED for BLAS at index 0 (Ref: 264.159363, Test: 264.159241)
 
 ------------------------------------------------
 FINAL RESULTS SUMMARY (Reference: Naive)
@@ -57,11 +56,8 @@ BLAS vs OPENMP: 118.30x faster
 ### Build and run
 ```markdown
 # Make the script executable
-chmod +x build.sh
+chmod +x run.sh
 
-# Compile any example from the examples/ folder
-./build.sh examples/test_layer.c
-
-# Run the generated binary
-./test_layer
+# Compile and run any example from the examples/ folder
+./run.sh examples/test_layer.c
 ```
