@@ -14,10 +14,11 @@ The long-term goal is to ship it as a small Python-friendly mini-framework — b
 ## Supported backends
 The core logic uses a Dispatcher Pattern (ops.h), allowing the library to switch compute engines at runtime.
 
-- Naive: Standard single-threaded C loops (Baseline).
-- OpenMP: Multi-threaded CPU parallelization.
+- [Naive](src/backends/ops_naive.c): Standard single-threaded C loops (Baseline).
+- [OpenMP](src/backends/ops_omp.c): Multi-threaded CPU parallelization.
+- [BLAS](src/backends/ops_blas.c): Wrapper for OpenBLAS/MKL.
 - CUDA: GPU acceleration (Planned).
-- BLAS: Wrapper for OpenBLAS/MKL.
+
 
 To enable <b>BLAS</b> (Basic Linear Algebra Subprograms) run: 
 
