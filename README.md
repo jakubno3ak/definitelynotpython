@@ -3,7 +3,7 @@ Not Python at all. Well…
 
 This is an ML-from-scratch-in-C playground focused on what high-level libraries don’t make you think about: manual memory management, performance-oriented kernels, and GPU compute.
 
-The long-term goal is to ship it as a small Python-friendly mini-framework — because after writing everything in C, it would be a shame not to call it from Python anyway.
+The long-term goal is to ship it as a small Python-friendly mini-framework, because after writing everything in C, it would be a shame not to call it from Python anyway.
 
 ## Quick Navigation
 - [Linear Regression](examples/markdowns/linear.md) - Classic BGD on Boston Housing dataset.
@@ -28,13 +28,13 @@ sudo apt-get install libopenblas-dev
 ```
 
 ### Benchmarks - matrix multiplication (1024×1024, float32)
-Intel i5-9600K (6 cores, AVX2), `-O3 -march=native`, best of 5 runs. Run with `make bench`.
+Intel i5-9600K (6 cores), `-O3 -march=native` (max optimizations + AVX2). Best of 5 runs, `make bench`.
 
 | Backend | Before (i-j-k loops) | Now | GFLOP/s (now) |
 |---|---|---|---|
 | Naive (1 thread) | 1.58 s | 0.116 s | 18 |
 | OpenMP (6 threads) | 0.30 s | 0.026 s | 82 |
-| OpenBLAS (6 threads) | — | 0.0032 s | 670 |
+| OpenBLAS (6 threads) | n/a | 0.0032 s | 670 |
 
 **Loop order matters (~13x).** Matrices are stored row-major. `i-j-k` reads B column by column,
 so every access lands on a new cache line. `i-k-j` computes `C[i][:] += A[i][k] * B[k][:]`,
