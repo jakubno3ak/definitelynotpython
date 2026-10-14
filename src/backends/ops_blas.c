@@ -1,4 +1,14 @@
 #include "../../include/matrix.h"
+
+#ifdef NO_BLAS
+#include "../../include/ops.h"
+#include <stdio.h>
+
+Matrix mat_mul_blas(Matrix A, Matrix B) {
+  fprintf(stderr, "Built without BLAS (BLAS=0). Fallback to Naive.\n");
+  return mat_mul_naive(A, B);
+}
+#else
 #include <cblas.h>
 
 Matrix mat_mul_blas(Matrix A, Matrix B) {
@@ -24,3 +34,4 @@ Matrix mat_mul_blas(Matrix A, Matrix B) {
 
     return C;
 }
+#endif

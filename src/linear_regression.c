@@ -22,32 +22,34 @@ Matrix predict(LinearRegression model, Matrix inputs) {
 
 Matrix predict_proba(LinearRegression model, Matrix inputs) {
   Matrix result = predict(model, inputs);
-  ops_sigmoid(&result);                  
+  ops_sigmoid(&result);
   return result;
 }
 
 Matrix predict_class(LinearRegression model, Matrix X) {
-    Matrix Probs = predict_proba(model, X);
-    Matrix Classes = create_matrix(Probs.rows, Probs.columns);
+  Matrix Probs = predict_proba(model, X);
+  Matrix Classes = create_matrix(Probs.rows, Probs.columns);
 
-    for (int i = 0; i < get_size(Probs); i++) {
-        Classes.data[i] = (Probs.data[i] > 0.5f) ? 1.0f : 0.0f;
-    }
+  for (int i = 0; i < get_size(Probs); i++) {
+    Classes.data[i] = (Probs.data[i] > 0.5f) ? 1.0f : 0.0f;
+  }
 
-    free_matrix(Probs);
-    return Classes;
+  free_matrix(Probs);
+  return Classes;
 }
 
-void update_weights(LinearRegression *model, Matrix Xt, Matrix Err, int n_samples) {
-    Matrix Grad = ops_mat_mul(Xt, Err);
-    mat_scale(Grad, 1.0f / n_samples);
-    mat_scale(Grad, -(model->learning_rate));
-    mat_add(model->W, Grad);
-    free_matrix(Grad);
+void update_weights(LinearRegression *model, Matrix Xt, Matrix Err,
+                    int n_samples) {
+  Matrix Grad = ops_mat_mul(Xt, Err);
+  mat_scale(Grad, 1.0f / n_samples);
+  mat_scale(Grad, -(model->learning_rate));
+  mat_add(model->W, Grad);
+  free_matrix(Grad);
 }
 
 void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
-  printf("--- LinearRegression: Fitting(%d epochs) using %s ---\n", epochs, ops_get_backend_name());
+  printf("--- LinearRegression: Fitting(%d epochs) using %s ---\n", epochs,
+         ops_get_backend_name());
   Matrix X_bias = matrix_add_bias(X);
   Matrix Xt = mat_transpose(X_bias);
 
@@ -56,27 +58,29 @@ void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
     Matrix Err = create_matrix(Pred.rows, Pred.columns);
 
     for (int j = 0; j < get_size(Pred); j++) {
-        Err.data[j] = Pred.data[j] - Y.data[j]; 
+      Err.data[j] = Pred.data[j] - Y.data[j];
     }
 
     update_weights(model, Xt, Err, X.rows);
 
     if (i % (epochs / 10 + 1) == 0) {
       float mse = 0.0;
-      for (int k = 0; k < get_size(Err); k++) mse += Err.data[k] * Err.data[k];
+      for (int k = 0; k < get_size(Err); k++)
+        mse += Err.data[k] * Err.data[k];
       printf("Epoch %d | MSE: %f\n", i, mse / X.rows);
     }
 
     free_matrix(Pred);
     free_matrix(Err);
   }
-  
+
   free_matrix(X_bias);
   free_matrix(Xt);
 }
 
 void fit_logistic(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
-  printf("--- LogisticRegression: Fitting(%d epochs) using %s ---\n", epochs, ops_get_backend_name());
+  printf("--- LogisticRegression: Fitting(%d epochs) using %s ---\n", epochs,
+         ops_get_backend_name());
   Matrix X_bias = matrix_add_bias(X);
   Matrix Xt = mat_transpose(X_bias);
 
@@ -86,14 +90,15 @@ void fit_logistic(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
 
     Matrix Err = create_matrix(Pred.rows, Pred.columns);
     for (int j = 0; j < get_size(Pred); j++) {
-        Err.data[j] = Pred.data[j] - Y.data[j]; 
+      Err.data[j] = Pred.data[j] - Y.data[j];
     }
 
     update_weights(model, Xt, Err, X.rows);
 
     if (i % (epochs / 10 + 1) == 0) {
       float mse = 0.0;
-      for (int k = 0; k < get_size(Err); k++) mse += Err.data[k] * Err.data[k];
+      for (int k = 0; k < get_size(Err); k++)
+        mse += Err.data[k] * Err.data[k];
       printf("Epoch %d | MSE: %f\n", i, mse / X.rows);
     }
 
@@ -103,7 +108,6 @@ void fit_logistic(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
   free_matrix(X_bias);
   free_matrix(Xt);
 }
-
 
 void validate(LinearRegression model, Matrix X_test, Matrix y_test) {
   Matrix predictions = predict(model, X_test);
