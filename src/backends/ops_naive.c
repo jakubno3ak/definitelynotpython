@@ -14,13 +14,14 @@ Matrix mat_mul_naive(Matrix A, Matrix B) {
 
   Matrix C = create_matrix(A.rows, B.columns);
 
+  // i-k-j order: C[i][:] += A[i][k] * B[k][:]
+  // B and C are walked row by row (sequential memory) instead of B by columns
   for (int i = 0; i < A.rows; i++) {
-    for (int j = 0; j < B.columns; j++) {
-      float sum = 0.0f;
-      for (int k = 0; k < A.columns; k++) {
-        sum += A.data[i * A.columns + k] * B.data[k * B.columns + j];
+    for (int k = 0; k < A.columns; k++) {
+      float a = A.data[i * A.columns + k];
+      for (int j = 0; j < B.columns; j++) {
+        C.data[i * C.columns + j] += a * B.data[k * B.columns + j];
       }
-      C.data[i * C.columns + j] = sum;
     }
   }
   return C;

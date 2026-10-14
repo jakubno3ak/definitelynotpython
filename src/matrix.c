@@ -10,9 +10,8 @@ Matrix create_matrix(int rows, int columns) {
   m.rows = rows;
   m.columns = columns;
 
-  size_t matrix_size = get_size(m) * sizeof(float);
-
-  m.data = (float *)malloc(matrix_size);
+  // calloc zero-fills the memory (malloc leaves garbage) - mat_mul accumulates with +=
+  m.data = (float *)calloc(get_size(m), sizeof(float));
 
   if (m.data == NULL) {
     fprintf(stderr, "Memory allocation failed!\n");
