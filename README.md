@@ -27,38 +27,23 @@ sudo apt-get update
 sudo apt-get install libopenblas-dev
 ```
 
-### Benchmarks - for now only for matrix multiplication
-```markdown
-=== BENCHMARK START (Matrix Size: 1024x1024) ===
-Threads available: 2
+### Benchmarks - matrix multiplication (1024×1024, float32)
+Intel i5-9600K (6 cores, AVX2), `-O3 -march=native`, best of 5 runs. Run with `make bench`.
 
-Running NAIVE backend...
---- Backend switched to: Naive (Single Thread) ---
-NAIVE Time: 3.9615 seconds
+| Backend | Before (i-j-k loops) | Now | GFLOP/s (now) |
+|---|---|---|---|
+| Naive (1 thread) | 1.58 s | 0.116 s | 18 |
+| OpenMP (6 threads) | 0.30 s | 0.026 s | 82 |
+| OpenBLAS (6 threads) | — | 0.0032 s | 670 |
 
-Running OPENMP backend...
---- Backend switched to: OpenMP (Multi Thread) ---
-OPENMP Time: 3.4465 seconds
-Verification PASSED for OPENMP
-
-Running BLAS backend...
---- Backend switched to: BLAS (Optimized) ---
-BLAS Time: 0.0291 seconds
-
-------------------------------------------------
-FINAL RESULTS SUMMARY (Reference: Naive)
-OPENMP Speedup: 1.15x
-BLAS   Speedup: 135.98x
-BLAS vs OPENMP: 118.30x faster
-------------------------------------------------
---- Done ---
-```
+**Loop order matters (~13x).** Matrices are stored row-major. `i-j-k` reads B column by column,
+so every access lands on a new cache line. `i-k-j` computes `C[i][:] += A[i][k] * B[k][:]`,
+reading B and C row by row (sequential memory, auto-vectorized by the compiler).
 
 ### Build and run
-```markdown
-# Make the script executable
-chmod +x run.sh
-
-# Compile and run any example from the examples/ folder
-./run.sh examples/test_layer.c
+```bash
+make run EX=examples/test_mlp.c   # build & run an example (downloads datasets)
+make bench                        # matmul benchmark
+make MODE=debug run EX=...        # -O0 -g + AddressSanitizer
+make BLAS=0 ...                   # build without OpenBLAS
 ```
