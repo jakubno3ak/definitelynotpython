@@ -66,9 +66,16 @@ void load_transformer(Transformer *t, const char *path) {
     t->rms_att[l] = matrix_view(ptr, 1, t->config.dim);
     ptr += t->config.dim;
   }
+
+  t->wq = malloc(t->config.n_layers * sizeof(Matrix));
+  for (int l = 0; l < t->config.n_layers; l++) {
+    t->wq[l] = matrix_view(ptr, t->config.dim, t->config.dim);
+    ptr += t->config.dim * t->config.dim;
+  }
 }
 
 void free_transformer(Transformer *t) {
   free(t->rms_att);
+  free(t->wq);
   munmap(t->data, t->file_size);
 }
