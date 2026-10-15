@@ -72,10 +72,31 @@ void load_transformer(Transformer *t, const char *path) {
     t->wq[l] = matrix_view(ptr, t->config.dim, t->config.dim);
     ptr += t->config.dim * t->config.dim;
   }
+
+  t->wk = malloc(t->config.n_layers * sizeof(Matrix));
+  for (int l = 0; l < t->config.n_layers; l++) {
+    t->wk[l] = matrix_view(ptr, t->config.dim, t->config.dim);
+    ptr += t->config.dim * t->config.dim;
+  }
+
+  t->wv = malloc(t->config.n_layers * sizeof(Matrix));
+  for (int l = 0; l < t->config.n_layers; l++) {
+    t->wv[l] = matrix_view(ptr, t->config.dim, t->config.dim);
+    ptr += t->config.dim * t->config.dim;
+  }
+
+  t->wo = malloc(t->config.n_layers * sizeof(Matrix));
+  for (int l = 0; l < t->config.n_layers; l++) {
+    t->wo[l] = matrix_view(ptr, t->config.dim, t->config.dim);
+    ptr += t->config.dim * t->config.dim;
+  }
 }
 
 void free_transformer(Transformer *t) {
   free(t->rms_att);
   free(t->wq);
+  free(t->wk);
+  free(t->wv);
+  free(t->wo);
   munmap(t->data, t->file_size);
 }

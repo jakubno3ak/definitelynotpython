@@ -21,6 +21,9 @@ typedef struct {
   Matrix token_embedding; // view, vocab_size x dim
   Matrix *rms_att;        // n_layers views, each 1 x dim
   Matrix *wq;             // n_layers views, each dim x dim
+  Matrix *wk;             // n_layers views, each dim x dim
+  Matrix *wv;             // n_layers views, each dim x dim
+  Matrix *wo;             // n_layers views, each dim x dim
   float *data;           // owner of the mmap'ed file
   size_t file_size;
 } Transformer;

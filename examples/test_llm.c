@@ -26,6 +26,12 @@ int main(void) {
   float *row1 = t.wq[0].data + t.wq[0].columns;
   printf("wq layer 0, row 1: %f %f %f %f\n", row1[0], row1[1], row1[2], row1[3]);
 
+  printf("\n");
+  Matrix k = t.wk[0], v = t.wv[0], o = t.wo[0];
+  printf("wk layer 0 (%d x %d), row 0: %f %f %f %f\n", k.rows, k.columns, k.data[0], k.data[1], k.data[2], k.data[3]);
+  printf("wv layer 0 (%d x %d), row 0: %f %f %f %f\n", v.rows, v.columns, v.data[0], v.data[1], v.data[2], v.data[3]);
+  printf("wo layer 0 (%d x %d), row 0: %f %f %f %f\n", o.rows, o.columns, o.data[0], o.data[1], o.data[2], o.data[3]);
+
   free_transformer(&t);
   return 0;
 }
