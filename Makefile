@@ -5,6 +5,7 @@
 #   make MODE=debug run EX=...         -O0 -g + AddressSanitizer/UBSan
 #   make BLAS=0 run EX=...             build without OpenBLAS
 #   make data / make mnist             download datasets
+#   make model                         download TinyStories 15M + tokenizer
 #   make clean
 
 CC    ?= gcc
@@ -36,11 +37,15 @@ BOSTON_CSV := boston.csv
 PIMA_CSV   := pima-indians-diabetes.csv
 DATA       := $(BOSTON_CSV) $(PIMA_CSV)
 
-.PHONY: all run bench examples data mnist clean help
+MODEL_DIR  := models
+MODEL      := $(MODEL_DIR)/stories15M.bin
+TOKENIZER  := $(MODEL_DIR)/tokenizer.bin
+
+.PHONY: all run bench examples data mnist model clean help
 .DEFAULT_GOAL := help
 
 help:
-	@sed -n '3,10p' Makefile | sed 's/^# \{0,1\}//'
+	@sed -n '3,9p' Makefile | sed 's/^# \{0,1\}//'
 
 # Library objects (compiled once, rebuilt only when changed)
 $(BUILD)/%.o: %.c
@@ -74,6 +79,16 @@ $(PIMA_CSV):
 mnist: mnist_train.csv mnist_test.csv
 mnist_%.csv:
 	wget -q --show-progress https://pjreddie.com/media/files/$@ -O $@
+
+model: $(MODEL) $(TOKENIZER)
+
+$(MODEL):
+	@mkdir -p $(MODEL_DIR)
+	wget -q --show-progress https://huggingface.co/karpathy/tinyllamas/resolve/main/stories15M.bin -O $@
+
+$(TOKENIZER):
+	@mkdir -p $(MODEL_DIR)
+	wget -q --show-progress https://raw.githubusercontent.com/karpathy/llama2.c/master/tokenizer.bin -O $@
 
 clean:
 	rm -rf build

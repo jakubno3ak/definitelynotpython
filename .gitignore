@@ -4,3 +4,4 @@ benchmark
 build/
 *.csv
 notes/
+models/
