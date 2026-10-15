@@ -5,6 +5,7 @@
 typedef struct {
   float *data;
   int rows, columns;
+  bool owns_data; // false = view into someone else's memory
 } Matrix;
 
 typedef struct {
@@ -15,6 +16,7 @@ typedef struct {
 } DataSplit;
 
 Matrix create_matrix(int rows, int columns);
+Matrix matrix_view(float *data, int rows, int columns);
 Matrix mat_transpose(Matrix m);
 Matrix matrix_add_bias(Matrix m);
 Matrix create_matrix_from_csv(const char *filename);

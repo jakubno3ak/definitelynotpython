@@ -18,6 +18,12 @@ Matrix create_matrix(int rows, int columns) {
     exit(1);
   }
 
+  m.owns_data = true;
+  return m;
+}
+
+Matrix matrix_view(float *data, int rows, int columns) {
+  Matrix m = {.data = data, .rows = rows, .columns = columns, .owns_data = false};
   return m;
 }
 
@@ -77,7 +83,9 @@ Matrix create_matrix_from_csv(const char *filename) {
 
 int get_size(Matrix m) { return m.rows * m.columns; }
 
-void free_matrix(Matrix m) { free(m.data); }
+void free_matrix(Matrix m) {
+  if (m.owns_data) free(m.data);
+}
 
 void print_matrix(Matrix m) {
   for (int i = 0; i < m.rows; i++) {
