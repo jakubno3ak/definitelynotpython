@@ -1,6 +1,10 @@
 #include "../include/transformer.h"
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 Config read_config(const char *path, bool *shared_weights) {
   FILE *f = fopen(path, "rb");
@@ -33,3 +37,27 @@ void print_config(Config c, bool shared_weights) {
   printf("seq_len:        %d\n", c.seq_len);
   printf("shared_weights: %s\n", shared_weights ? "yes" : "no");
 }
+
+void load_transformer(Transformer *t, const char *path) {
+  t->config = read_config(path, &t->shared_weights);
+
+  int fd = open(path, O_RDONLY);
+  struct stat st;
+  if (fd == -1 || fstat(fd, &st) == -1) {
+    fprintf(stderr, "Error: could not open model %s\n", path);
+    exit(1);
+  }
+  t->file_size = st.st_size;
+
+  t->data = mmap(NULL, t->file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  close(fd);
+  if (t->data == MAP_FAILED) {
+    fprintf(stderr, "Error: mmap failed for %s\n", path);
+    exit(1);
+  }
+
+  float *ptr = t->data + sizeof(Config) / sizeof(float); // skip the header
+  t->token_embedding = matrix_view(ptr, t->config.vocab_size, t->config.dim);
+}
+
+void free_transformer(Transformer *t) { munmap(t->data, t->file_size); }
