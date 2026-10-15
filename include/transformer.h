@@ -19,7 +19,7 @@ typedef struct {
   Config config;
   bool shared_weights;
   Matrix token_embedding; // view, vocab_size x dim
-  Matrix rms_att_0;       // view, 1 x dim (layer 0 only, for now)
+  Matrix *rms_att;        // n_layers views, each 1 x dim
   float *data;           // owner of the mmap'ed file
   size_t file_size;
 } Transformer;

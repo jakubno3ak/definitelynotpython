@@ -60,7 +60,15 @@ void load_transformer(Transformer *t, const char *path) {
   t->token_embedding = matrix_view(ptr, t->config.vocab_size, t->config.dim);
 
   ptr += t->config.vocab_size * t->config.dim;
-  t->rms_att_0 = matrix_view(ptr, 1, t->config.dim);
+
+  t->rms_att = malloc(t->config.n_layers * sizeof(Matrix));
+  for (int l = 0; l < t->config.n_layers; l++) {
+    t->rms_att[l] = matrix_view(ptr, 1, t->config.dim);
+    ptr += t->config.dim;
+  }
 }
 
-void free_transformer(Transformer *t) { munmap(t->data, t->file_size); }
+void free_transformer(Transformer *t) {
+  free(t->rms_att);
+  munmap(t->data, t->file_size);
+}
