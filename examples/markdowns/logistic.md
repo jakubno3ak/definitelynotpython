@@ -4,9 +4,9 @@ Binary classification flow for the Diabetes dataset using Sigmoid activation.
 
 ```c
 #include <stdio.h>
-#include "include/matrix.h"
-#include "include/linear_regression.h"
-#include "include/ops.h"
+#include "matrix.h"
+#include "logistic_regression.h"
+#include "ops.h"
 
 int main() {
     ops_set_backend(BACKEND_OMP);
@@ -19,13 +19,16 @@ int main() {
     slice_matrix(input_cols, 1, &RawData, &X, &y);
     free_matrix(RawData);
 
-    // Preprocessing
-    normalize_matrix_min_max(&X);
+    // Preprocessing: split first, then fit the scale on train only
     DataSplit split = train_test_split(&X, &y, 0.2, true);
+    MinMax scaler = minmax_fit(split.X_train);
+    minmax_apply(scaler, &split.X_train);
+    minmax_apply(scaler, &split.X_test);
+    minmax_free(scaler);
 
     // Train Logistic Model
-    LinearRegression model = create_linear_regression(input_cols, 1, 0.1); 
-    fit_logistic(&model, split.X_train, split.y_train, 10000); 
+    LogisticRegression model = logreg_create(input_cols, 1, 0.1); 
+    logreg_fit(&model, split.X_train, split.y_train, 10000); 
 
     // Manual Validation Loop
     // ... (Accuracy calculation logic) ...

@@ -3,9 +3,9 @@
 Full experiment flow for predicting housing prices using Mean Squared Error.
 
 ```c
-#include "include/linear_regression.h"
-#include "include/matrix.h"
-#include "include/ops.h"
+#include "linear_regression.h"
+#include "matrix.h"
+#include "ops.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -26,18 +26,21 @@ int main() {
 
   free_matrix(RawData);
 
-  printf("--- 2. Normalizing X ---\n");
-  normalize_matrix_min_max(&X);
-
   DataSplit split = train_test_split(&X, &y, 0.2, true);
 
-  printf("--- 3. Training Model ---\n");
-  LinearRegression model = create_linear_regression(input_cols, 1, 0.01);
+  printf("--- 2. Normalizing X (scale fitted on train only) ---\n");
+  MinMax scaler = minmax_fit(split.X_train);
+  minmax_apply(scaler, &split.X_train);
+  minmax_apply(scaler, &split.X_test);
+  minmax_free(scaler);
 
-  fit(&model, split.X_train, split.y_train, 10000);
+  printf("--- 3. Training Model ---\n");
+  LinearRegression model = linreg_create(input_cols, 1, 0.01);
+
+  linreg_fit(&model, split.X_train, split.y_train, 10000);
 
   printf("--- 4. Validate Model ---\n");
-  validate(model, split.X_test, split.y_test);
+  linreg_validate(model, split.X_test, split.y_test);
 
   free_matrix(X);
   free_matrix(y);

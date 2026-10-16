@@ -32,11 +32,14 @@ int main() {
     slice_matrix(input_cols, 1, &RawData, &X, &y);
     free_matrix(RawData); 
 
-    printf("--- 2. Normalizing X ---\n");
-    normalize_matrix_min_max(&X);
-
-    printf("--- 3. Splitting ---\n");
+    printf("--- 2. Splitting ---\n");
     DataSplit split = train_test_split(&X, &y, 0.2, true);
+
+    printf("--- 3. Normalizing X (scale fitted on train only) ---\n");
+    MinMax scaler = minmax_fit(split.X_train);
+    minmax_apply(scaler, &split.X_train);
+    minmax_apply(scaler, &split.X_test);
+    minmax_free(scaler);
 
     printf("--- 4. Initializes Neural Layer ---\n");
     Layer layer = create_layer(input_cols, 1, ACT_SIGMOID);

@@ -26,11 +26,19 @@ void mat_scale(Matrix m, float n);
 void free_matrix(Matrix m);
 void print_matrix(Matrix m);
 void initialize_weights(Matrix m);
-void normalize_matrix_min_max(Matrix *m);
 void slice_matrix(int inputs_features, int output_features, Matrix *m,
                   Matrix *X, Matrix *y);
 void mat_apply(Matrix *m, float (*func)(float));
 int get_size(Matrix m);
+
+typedef struct {
+  Matrix min;   // 1 x columns
+  Matrix range; // 1 x columns
+} MinMax;
+
+MinMax minmax_fit(Matrix X);
+void minmax_apply(MinMax s, Matrix *X);
+void minmax_free(MinMax s);
 
 DataSplit train_test_split(Matrix *X, Matrix *y, float test_size, bool shuffle);
 

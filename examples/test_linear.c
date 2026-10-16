@@ -21,10 +21,13 @@ int main() {
 
   free_matrix(RawData);
 
-  printf("--- 2. Normalizing X ---\n");
-  normalize_matrix_min_max(&X);
-
   DataSplit split = train_test_split(&X, &y, 0.2, true);
+
+  printf("--- 2. Normalizing X (scale fitted on train only) ---\n");
+  MinMax scaler = minmax_fit(split.X_train);
+  minmax_apply(scaler, &split.X_train);
+  minmax_apply(scaler, &split.X_test);
+  minmax_free(scaler);
 
   printf("--- 3. Training Model ---\n");
   LinearRegression model = linreg_create(input_cols, 1, 0.01);

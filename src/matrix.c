@@ -153,35 +153,39 @@ void mat_add(Matrix a, Matrix b) {
   }
 }
 
-void normalize_matrix_min_max(Matrix *m) {
-  for (int j = 0; j < m->columns; j++) {
+MinMax minmax_fit(Matrix X) {
+  MinMax s = {create_matrix(1, X.columns), create_matrix(1, X.columns)};
+
+  for (int j = 0; j < X.columns; j++) {
     float min = FLT_MAX;
     float max = -FLT_MAX;
-
-    for (int i = 0; i < m->rows; i++) {
-      int column_idx = i * m->columns + j;
-      float val = m->data[column_idx];
-
-      if (val <= min) {
-        min = val;
-      }
-
-      if (val >= max) {
-        max = val;
-      }
+    for (int i = 0; i < X.rows; i++) {
+      float val = X.data[i * X.columns + j];
+      if (val < min) min = val;
+      if (val > max) max = val;
     }
 
     float range = max - min;
-    if (range < 0.00001) {
-      range = 1.0;
-    }
+    if (range < 0.00001f) range = 1.0f; // constant column
 
-    for (int i = 0; i < m->rows; i++) {
-      int column_idx = i * m->columns + j;
-      float val = m->data[column_idx];
-      m->data[column_idx] = (val - min) / range;
+    s.min.data[j] = min;
+    s.range.data[j] = range;
+  }
+  return s;
+}
+
+void minmax_apply(MinMax s, Matrix *X) {
+  for (int i = 0; i < X->rows; i++) {
+    for (int j = 0; j < X->columns; j++) {
+      int idx = i * X->columns + j;
+      X->data[idx] = (X->data[idx] - s.min.data[j]) / s.range.data[j];
     }
   }
+}
+
+void minmax_free(MinMax s) {
+  free_matrix(s.min);
+  free_matrix(s.range);
 }
 
 void slice_matrix(int inputs_features, int output_features, Matrix *m,
