@@ -37,6 +37,9 @@ typedef struct {
 typedef struct {
   Matrix x;     // 1 x dim, the current token's vector
   Matrix xnorm; // 1 x dim, x after RMSNorm
+  Matrix q;     // 1 x dim, attention query
+  Matrix k;     // 1 x dim, attention key
+  Matrix v;     // 1 x dim, attention value
 } RunState;
 
 Config read_config(const char *path, bool *shared_weights);

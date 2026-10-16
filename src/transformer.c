@@ -134,12 +134,18 @@ RunState run_state_create(Config c) {
   RunState state;
   state.x = mat_create(1, c.dim);
   state.xnorm = mat_create(1, c.dim);
+  state.q = mat_create(1, c.dim);
+  state.k = mat_create(1, c.dim);
+  state.v = mat_create(1, c.dim);
   return state;
 }
 
 void run_state_free(RunState *state) {
   mat_free(state->x);
   mat_free(state->xnorm);
+  mat_free(state->q);
+  mat_free(state->k);
+  mat_free(state->v);
 }
 
 void embed(Transformer *t, RunState *state, int token) {

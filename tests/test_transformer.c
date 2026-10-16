@@ -1,4 +1,5 @@
 #include "check.h"
+#include "ops.h"
 #include "transformer.h"
 
 static void test_rmsnorm_formula(void) {
@@ -58,6 +59,21 @@ int main(void) {
   CHECK_NEAR(state.xnorm.data[1], -0.456318f, 1e-5f);
   CHECK_NEAR(state.xnorm.data[2], 0.252732f, 1e-5f);
   CHECK(state.x.data[0] == t.token_embedding.data[288]); // x itself is unchanged
+
+  ops_matvec(state.q, t.wq[0], state.xnorm);
+  CHECK_NEAR(state.q.data[0], -0.432269f, 1e-5f);
+  CHECK_NEAR(state.q.data[1], 0.146972f, 1e-5f);
+  CHECK_NEAR(state.q.data[2], -0.345075f, 1e-5f);
+
+  ops_matvec(state.k, t.wk[0], state.xnorm);
+  CHECK_NEAR(state.k.data[0], 0.009520f, 1e-5f);
+  CHECK_NEAR(state.k.data[1], -0.021181f, 1e-5f);
+  CHECK_NEAR(state.k.data[2], 0.046356f, 1e-5f);
+
+  ops_matvec(state.v, t.wv[0], state.xnorm);
+  CHECK_NEAR(state.v.data[0], -0.013250f, 1e-5f);
+  CHECK_NEAR(state.v.data[1], 0.038565f, 1e-5f);
+  CHECK_NEAR(state.v.data[2], 0.030018f, 1e-5f);
 
   run_state_free(&state);
   free_transformer(&t);
