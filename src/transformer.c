@@ -96,6 +96,9 @@ void load_transformer(Transformer *t, const char *path) {
 
   t->w3 = layer_views(ptr, t->config.n_layers, t->config.hidden_dim, t->config.dim);
   ptr += t->config.n_layers * t->config.hidden_dim * t->config.dim;
+
+  t->rms_final = matrix_view(ptr, 1, t->config.dim);
+  ptr += t->config.dim;
 }
 
 void free_transformer(Transformer *t) {

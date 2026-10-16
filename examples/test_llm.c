@@ -29,6 +29,9 @@ int main(void) {
   print_layers("w2", t.w2, t.config.n_layers);
   print_layers("w3", t.w3, t.config.n_layers);
 
+  Matrix f = t.rms_final;
+  printf("rms_final                 %d x %d    %f %f %f\n", f.rows, f.columns, f.data[0], f.data[1], f.data[2]);
+
   free_transformer(&t);
   return 0;
 }
