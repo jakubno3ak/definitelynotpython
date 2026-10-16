@@ -42,6 +42,7 @@ typedef struct {
   Matrix v;            // 1 x dim, attention value
   Matrix *key_cache;   // n_layers, each seq_len x dim: k of every position so far
   Matrix *value_cache; // n_layers, each seq_len x dim: v of every position so far
+  Matrix att;          // n_heads x seq_len: attention scores, one row per head
   int n_layers;
 } RunState;
 
@@ -54,5 +55,6 @@ void run_state_free(RunState *state);
 void embed(Transformer *t, RunState *state, int token);
 void rmsnorm(Matrix out, Matrix x, Matrix weight);
 void kv_store(RunState *state, int layer, int pos);
+void attention(Transformer *t, RunState *state, int layer, int pos);
 
 #endif
