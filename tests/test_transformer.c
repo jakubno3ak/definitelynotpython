@@ -81,8 +81,8 @@ int main(void) {
   CHECK(state.key_cache[0].data[288] == 0.0f); // position 1 still empty
 
   attention(&t, &state, 0, 0);
-  CHECK_NEAR(state.att.data[0], 4.382380f, 1e-4f);       // head 0
-  CHECK_NEAR(state.att.data[5 * 256], 5.603486f, 1e-4f); // head 5
+  CHECK_NEAR(state.att.data[0], 1.0f, 1e-6f);       // head 0: 100% on itself
+  CHECK_NEAR(state.att.data[5 * 256], 1.0f, 1e-6f); // head 5
 
   run_state_free(&state);
   free_transformer(&t);

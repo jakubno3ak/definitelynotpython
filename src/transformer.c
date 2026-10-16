@@ -1,4 +1,5 @@
 #include "transformer.h"
+#include "ops_kernels.h"
 #include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
@@ -204,5 +205,6 @@ void attention(Transformer *t, RunState *state, int layer, int pos) {
         dot += q[i] * k[i];
       scores[p] = dot / sqrtf(head_size);
     }
+    kernel_softmax_row(scores, pos + 1);
   }
 }
