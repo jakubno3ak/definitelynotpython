@@ -2,6 +2,8 @@
 #
 #   make run EX=examples/test_mlp.c    build & run an example
 #   make bench                         matrix multiplication benchmark
+#   make test                          build & run all tests (needs make model)
+#   make format / make format-check    clang-format all C files / only check
 #   make MODE=debug run EX=...         -O0 -g + AddressSanitizer/UBSan
 #   make BLAS=0 run EX=...             build without OpenBLAS
 #   make data / make mnist             download datasets
@@ -41,11 +43,11 @@ MODEL_DIR  := models
 MODEL      := $(MODEL_DIR)/stories15M.bin
 TOKENIZER  := $(MODEL_DIR)/tokenizer.bin
 
-.PHONY: all run bench examples data mnist model clean help
+.PHONY: all run bench test format format-check examples data mnist model clean help
 .DEFAULT_GOAL := help
 
 help:
-	@sed -n '3,9p' Makefile | sed 's/^# \{0,1\}//'
+	@sed -n '3,11p' Makefile | sed 's/^# \{0,1\}//'
 
 # Library objects (compiled once, rebuilt only when changed)
 $(BUILD)/%.o: %.c
@@ -67,6 +69,19 @@ run: $(BUILD)/bin/$(basename $(EX)) $(DATA)
 
 bench: $(BUILD)/bin/benchmark
 	./$<
+
+TESTS := $(patsubst %.c,$(BUILD)/bin/%,$(wildcard tests/*.c))
+
+test: $(TESTS) $(MODEL)
+	@fail=0; for t in $(TESTS); do ./$$t || fail=1; done; exit $$fail
+
+C_FILES := $(shell git ls-files '*.c' '*.h')
+
+format:
+	clang-format -i $(C_FILES)
+
+format-check:
+	clang-format --dry-run --Werror $(C_FILES)
 
 data: $(DATA)
 

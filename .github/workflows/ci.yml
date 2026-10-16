@@ -1,0 +1,36 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev
+          pip install clang-format==21.1.8  # same version as local, versions format differently
+
+      - name: Cache model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: models-stories15M-v1
+
+      - name: Download model
+        run: make model
+
+      - name: Check formatting
+        run: make format-check
+
+      - name: Tests (release)
+        run: make test
+
+      - name: Tests (debug + AddressSanitizer/UBSan)
+        run: make MODE=debug test
+
+      - name: Tests without BLAS
+        run: make BLAS=0 test

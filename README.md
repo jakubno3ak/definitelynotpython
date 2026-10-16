@@ -1,4 +1,6 @@
 # definitelynotpython
+[![CI](https://github.com/jakubno3ak/definitelynotpython/actions/workflows/ci.yml/badge.svg)](https://github.com/jakubno3ak/definitelynotpython/actions/workflows/ci.yml)
+
 Not Python at all. Well…
 
 This is an ML-from-scratch-in-C playground focused on what high-level libraries don’t make you think about: manual memory management, performance-oriented kernels, and GPU compute.
@@ -44,6 +46,7 @@ reading B and C row by row (sequential memory, auto-vectorized by the compiler).
 ```bash
 make run EX=examples/test_mlp.c   # build & run an example (downloads datasets)
 make bench                        # matmul benchmark
+make model && make test           # download the model, run all tests
 make MODE=debug run EX=...        # -O0 -g + AddressSanitizer
 make BLAS=0 ...                   # build without OpenBLAS
 ```
