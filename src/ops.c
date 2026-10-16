@@ -2,6 +2,7 @@
 #include "ops_kernels.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static ComputeBackend CURRENT_BACKEND = BACKEND_NAIVE;
 
@@ -41,6 +42,15 @@ Matrix ops_mat_mul(Matrix A, Matrix B) {
   default:
     return mat_mul_naive(A, B);
   }
+}
+
+void ops_matvec(Matrix out, Matrix W, Matrix x) {
+  if (W.columns != mat_size(x) || W.rows != mat_size(out)) {
+    fprintf(stderr, "Shape mismatch in matvec: W (%dx%d), x %d, out %d\n", W.rows, W.columns,
+            mat_size(x), mat_size(out));
+    exit(1);
+  }
+  matvec_naive(out, W, x); // only naive so far, OpenMP/BLAS come with the tokens/s benchmark
 }
 
 void ops_add_bias(Matrix *m, Matrix *bias) {

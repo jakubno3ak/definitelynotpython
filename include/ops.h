@@ -19,6 +19,10 @@ Matrix mat_mul_omp(Matrix A, Matrix B);
 Matrix mat_mul_blas(Matrix A, Matrix B);
 Matrix ops_mat_mul(Matrix A, Matrix B);
 
+// out = W · x, W is (out x in), writes into out (no allocation)
+void matvec_naive(Matrix out, Matrix W, Matrix x);
+void ops_matvec(Matrix out, Matrix W, Matrix x);
+
 // add bias
 void add_bias_naive(Matrix *m, Matrix *bias);
 void add_bias_omp(Matrix *m, Matrix *bias);

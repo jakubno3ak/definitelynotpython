@@ -27,6 +27,15 @@ Matrix mat_mul_naive(Matrix A, Matrix B) {
   return C;
 }
 
+void matvec_naive(Matrix out, Matrix W, Matrix x) {
+  for (int i = 0; i < W.rows; i++) {
+    float sum = 0.0f;
+    for (int j = 0; j < W.columns; j++)
+      sum += W.data[i * W.columns + j] * x.data[j];
+    out.data[i] = sum;
+  }
+}
+
 void relu_naive(Matrix *m) { APPLY_KERNEL_NAIVE(m, KERNEL_RELU); }
 
 void relu_prime_naive(Matrix *m) { APPLY_KERNEL_NAIVE(m, KERNEL_RELU_PRIME); }

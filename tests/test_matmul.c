@@ -40,6 +40,19 @@ int main(void) {
     mat_free(got);
   }
 
+  // matvec: the 2x3 example, W = [1 2 3; 4 5 6], x = [1 0 2] -> [7 16]
+  Matrix W = mat_create(2, 3), x = mat_create(1, 3), out = mat_create(1, 2);
+  float w[] = {1, 2, 3, 4, 5, 6}, xv[] = {1, 0, 2};
+  for (int i = 0; i < 6; i++)
+    W.data[i] = w[i];
+  for (int i = 0; i < 3; i++)
+    x.data[i] = xv[i];
+  ops_matvec(out, W, x);
+  CHECK(out.data[0] == 7.0f && out.data[1] == 16.0f);
+  mat_free(W);
+  mat_free(x);
+  mat_free(out);
+
   mat_free(A);
   mat_free(B);
   mat_free(X);
