@@ -25,6 +25,9 @@ int main(void) {
   print_layers("wv", t.wv, t.config.n_layers);
   print_layers("wo", t.wo, t.config.n_layers);
   print_layers("rms_ffn", t.rms_ffn, t.config.n_layers);
+  print_layers("w1", t.w1, t.config.n_layers);
+  print_layers("w2", t.w2, t.config.n_layers);
+  print_layers("w3", t.w3, t.config.n_layers);
 
   free_transformer(&t);
   return 0;
