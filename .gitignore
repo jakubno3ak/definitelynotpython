@@ -5,3 +5,6 @@ build/
 *.csv
 notes/
 models/
+others/
+run.sh
+python/
