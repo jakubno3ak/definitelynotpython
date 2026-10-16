@@ -13,7 +13,7 @@ MODE  ?= release
 BLAS  ?= 1
 
 CFLAGS   := -std=c11 -Wall -Wextra -fopenmp -MMD -MP
-CPPFLAGS := -I. -Iinclude
+CPPFLAGS := -Iinclude
 LDLIBS   := -lm -fopenmp
 
 ifeq ($(MODE),debug)

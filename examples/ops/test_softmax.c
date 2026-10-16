@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "include/matrix.h"
-#include "include/ops.h"
+#include "matrix.h"
+#include "ops.h"
 
 void print_softmax_results(Matrix m) {
     float sum = 0.0f;

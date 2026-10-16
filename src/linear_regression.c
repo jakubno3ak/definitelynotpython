@@ -1,5 +1,5 @@
-#include "../include/linear_regression.h"
-#include "../include/ops.h"
+#include "linear_regression.h"
+#include "ops.h"
 #include <math.h>
 #include <stdio.h>
 

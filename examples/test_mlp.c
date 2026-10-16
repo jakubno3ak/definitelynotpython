@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include "include/matrix.h"
-#include "include/ops.h"
-#include "include/layer.h"
+#include "matrix.h"
+#include "ops.h"
+#include "layer.h"
 
 float calculate_accuracy(Matrix predictions, Matrix targets) {
     int correct = 0;

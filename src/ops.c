@@ -1,5 +1,5 @@
-#include "../include/ops.h"
-#include "../include/ops_kernels.h"
+#include "ops.h"
+#include "ops_kernels.h"
 #include <math.h>
 #include <stdio.h>
 

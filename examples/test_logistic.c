@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "include/matrix.h"
-#include "include/linear_regression.h"
-#include "include/ops.h"
+#include "matrix.h"
+#include "linear_regression.h"
+#include "ops.h"
 
 int main() {
     srand(time(NULL));

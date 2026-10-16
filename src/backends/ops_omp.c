@@ -2,8 +2,8 @@
 #include <stdlib.h> 
 #include <omp.h>
 #include <math.h>
-#include "../../include/matrix.h"
-#include "../../include/ops_kernels.h"
+#include "matrix.h"
+#include "ops_kernels.h"
 
 Matrix mat_mul_omp(Matrix A, Matrix B) {
   if (A.columns != B.rows) {

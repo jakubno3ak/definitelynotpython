@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/ops.h"
-#include "include/layer.h"
-#include "include/ops_kernels.h"
+#include "ops.h"
+#include "layer.h"
+#include "ops_kernels.h"
 
 Layer create_layer(int input_size, int output_size, ActivationType activation) {
     Layer layer;

@@ -1,7 +1,7 @@
-#include "../../include/matrix.h"
+#include "matrix.h"
 
 #ifdef NO_BLAS
-#include "../../include/ops.h"
+#include "ops.h"
 #include <stdio.h>
 
 Matrix mat_mul_blas(Matrix A, Matrix B) {

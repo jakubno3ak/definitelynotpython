@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <omp.h>
 #include <math.h>
-#include "include/ops.h"
-#include "include/matrix.h"
+#include "ops.h"
+#include "matrix.h"
 
 #define N 1024
 #define RUNS 5

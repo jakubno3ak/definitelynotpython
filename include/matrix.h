@@ -1,6 +1,7 @@
-#include <stdbool.h>
 #ifndef MATRIX_H
 #define MATRIX_H
+
+#include <stdbool.h>
 
 typedef struct {
   float *data;

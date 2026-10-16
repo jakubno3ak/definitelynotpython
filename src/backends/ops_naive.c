@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../../include/matrix.h"
-#include "../../include/ops_kernels.h"
+#include "matrix.h"
+#include "ops_kernels.h"
 
 // O(n^3)
 Matrix mat_mul_naive(Matrix A, Matrix B) {

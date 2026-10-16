@@ -1,6 +1,6 @@
-#include "include/linear_regression.h"
-#include "include/matrix.h"
-#include "include/ops.h"
+#include "linear_regression.h"
+#include "matrix.h"
+#include "ops.h"
 #include <stdbool.h>
 #include <stdio.h>
 

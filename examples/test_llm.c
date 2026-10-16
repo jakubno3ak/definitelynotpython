@@ -1,4 +1,4 @@
-#include "include/transformer.h"
+#include "transformer.h"
 #include <stdio.h>
 
 static void print_layers(const char *name, Matrix *w, int n_layers) {
