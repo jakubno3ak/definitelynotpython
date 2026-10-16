@@ -24,6 +24,7 @@ typedef struct {
   Matrix *wk;             // n_layers views, each dim x dim
   Matrix *wv;             // n_layers views, each dim x dim
   Matrix *wo;             // n_layers views, each dim x dim
+  Matrix *rms_ffn;        // n_layers views, each 1 x dim
   float *data;           // owner of the mmap'ed file
   size_t file_size;
 } Transformer;

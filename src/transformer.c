@@ -84,6 +84,9 @@ void load_transformer(Transformer *t, const char *path) {
 
   t->wo = layer_views(ptr, t->config.n_layers, t->config.dim, t->config.dim);
   ptr += t->config.n_layers * t->config.dim * t->config.dim;
+
+  t->rms_ffn = layer_views(ptr, t->config.n_layers, 1, t->config.dim);
+  ptr += t->config.n_layers * t->config.dim;
 }
 
 void free_transformer(Transformer *t) {
@@ -92,5 +95,6 @@ void free_transformer(Transformer *t) {
   free(t->wk);
   free(t->wv);
   free(t->wo);
+  free(t->rms_ffn);
   munmap(t->data, t->file_size);
 }
