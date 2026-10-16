@@ -188,6 +188,23 @@ void rmsnorm(Matrix out, Matrix x, Matrix weight) {
     out.data[i] = x.data[i] / rms * weight.data[i];
 }
 
+void rope(Matrix q, Matrix k, int pos, int head_size) {
+  for (int i = 0; i < q.columns; i += 2) {
+    int pair = (i % head_size) / 2;
+    float theta = 1.0f / powf(10000.0f, 2.0f * pair / head_size);
+    float angle = pos * theta;
+    float c = cosf(angle), s = sinf(angle);
+
+    float q0 = q.data[i], q1 = q.data[i + 1];
+    q.data[i] = q0 * c - q1 * s;
+    q.data[i + 1] = q0 * s + q1 * c;
+
+    float k0 = k.data[i], k1 = k.data[i + 1];
+    k.data[i] = k0 * c - k1 * s;
+    k.data[i + 1] = k0 * s + k1 * c;
+  }
+}
+
 void kv_store(RunState *state, int layer, int pos) {
   int dim = state->k.columns;
   memcpy(state->key_cache[layer].data + pos * dim, state->k.data, dim * sizeof(float));

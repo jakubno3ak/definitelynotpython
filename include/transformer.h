@@ -55,6 +55,7 @@ RunState run_state_create(Config c);
 void run_state_free(RunState *state);
 void embed(Transformer *t, RunState *state, int token);
 void rmsnorm(Matrix out, Matrix x, Matrix weight);
+void rope(Matrix q, Matrix k, int pos, int head_size);
 void kv_store(RunState *state, int layer, int pos);
 void attention(Transformer *t, RunState *state, int layer, int pos);
 

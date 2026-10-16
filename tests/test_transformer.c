@@ -26,6 +26,7 @@ static void layer0_attention(Transformer *t, RunState *s, int token, int pos) {
   ops_matvec(s->q, t->wq[0], s->xnorm);
   ops_matvec(s->k, t->wk[0], s->xnorm);
   ops_matvec(s->v, t->wv[0], s->xnorm);
+  rope(s->q, s->k, pos, t->config.dim / t->config.n_heads);
   kv_store(s, 0, pos);
   attention(t, s, 0, pos);
 }
@@ -98,15 +99,16 @@ int main(void) {
 
   run_state_free(&state);
 
-  // Two tokens [BOS, " Once"], layer 0, without RoPE (not implemented yet)
+  // Two tokens [BOS, " Once"], layer 0, with RoPE: matches the real model
   RunState s2 = run_state_create(c);
   layer0_attention(&t, &s2, 1, 0);              // BOS at position 0: leaves its k, v in the cache
   layer0_attention(&t, &s2, 9038, 1);           // " Once" at position 1: looks at BOS and itself
-  CHECK_NEAR(s2.att.data[0], 0.683109f, 1e-5f); // head 0: 68.3% on BOS
-  CHECK_NEAR(s2.att.data[1 * 256], 0.998586f, 1e-5f);       // head 1: 99.9% on BOS
-  CHECK_NEAR(s2.att.data[3 * 256], 0.148189f, 1e-5f);       // head 3: 14.8% on BOS
+  CHECK_NEAR(s2.att.data[0], 0.682737f, 1e-5f); // head 0: 68.3% on BOS
+  CHECK_NEAR(s2.att.data[1 * 256], 0.998380f, 1e-5f); // head 1: 99.8% on BOS
+  CHECK_NEAR(s2.att.data[3 * 256], 0.144991f, 1e-5f); // head 3: 14.5% on BOS
+  CHECK_NEAR(s2.att.data[2 * 256], 0.621662f, 1e-5f); // head 2: 62.2%, differs most without RoPE
   CHECK_NEAR(s2.att.data[0] + s2.att.data[1], 1.0f, 1e-6f); // percentages sum to 1
-  CHECK_NEAR(s2.att_out.data[0], 0.014519f, 1e-5f);         // mix of v
+  CHECK_NEAR(s2.att_out.data[0], 0.014552f, 1e-5f);         // mix of v
   run_state_free(&s2);
   free_transformer(&t);
   return report("test_transformer");
