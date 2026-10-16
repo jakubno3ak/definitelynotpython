@@ -12,7 +12,7 @@ Matrix mat_mul_naive(Matrix A, Matrix B) {
     exit(1);
   }
 
-  Matrix C = create_matrix(A.rows, B.columns);
+  Matrix C = mat_create(A.rows, B.columns);
 
   // i-k-j order: C[i][:] += A[i][k] * B[k][:]
   // B and C are walked row by row (sequential memory) instead of B by columns

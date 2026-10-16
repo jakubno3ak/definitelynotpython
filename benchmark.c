@@ -33,7 +33,7 @@ double time_backend(Matrix A, Matrix B, Matrix *C) {
     double start = omp_get_wtime();
     Matrix tmp = ops_mat_mul(A, B);
     double t = omp_get_wtime() - start;
-    free_matrix(tmp);
+    mat_free(tmp);
     if (t < best)
       best = t;
   }
@@ -44,11 +44,11 @@ int main() {
   printf("=== BENCHMARK START (Matrix Size: %dx%d, best of %d runs) ===\n", N, N, RUNS);
   printf("Threads available: %d\n", omp_get_max_threads());
 
-  Matrix A = create_matrix(N, N);
-  Matrix B = create_matrix(N, N);
+  Matrix A = mat_create(N, N);
+  Matrix B = mat_create(N, N);
 
-  initialize_weights(A);
-  initialize_weights(B);
+  mat_fill_random(A);
+  mat_fill_random(B);
 
   // --- 1. NAIVE ---
   printf("\nRunning NAIVE backend...\n");
@@ -81,11 +81,11 @@ int main() {
   printf("BLAS vs OPENMP: %.2fx faster\n", time_omp / time_blas);
   printf("------------------------------------------------\n");
 
-  free_matrix(A);
-  free_matrix(B);
-  free_matrix(C_naive);
-  free_matrix(C_omp);
-  free_matrix(C_blas);
+  mat_free(A);
+  mat_free(B);
+  mat_free(C_naive);
+  mat_free(C_omp);
+  mat_free(C_blas);
 
   return 0;
 }

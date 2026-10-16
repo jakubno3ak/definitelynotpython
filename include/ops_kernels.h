@@ -10,12 +10,12 @@
 #define KERNEL_SIGMOID_PRIME(s) ((s) * (1.0f - (s)))
 
 #define APPLY_KERNEL_NAIVE(m, kernel_func)                                                         \
-  for (int i = 0; i < get_size(*(m)); i++) {                                                       \
+  for (int i = 0; i < mat_size(*(m)); i++) {                                                       \
     (m)->data[i] = kernel_func((m)->data[i]);                                                      \
   }
 
 #define APPLY_KERNEL_OMP(m, kernel_func)                                                           \
-  _Pragma("omp parallel for") for (int i = 0; i < get_size(*(m)); i++) {                           \
+  _Pragma("omp parallel for") for (int i = 0; i < mat_size(*(m)); i++) {                           \
     (m)->data[i] = kernel_func((m)->data[i]);                                                      \
   }
 

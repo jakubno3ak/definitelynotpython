@@ -7,6 +7,7 @@ Advanced Multi-Layer Perceptron architecture with manual backpropagation.
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include "data.h"
 #include "matrix.h"
 #include "ops.h"
 #include "layer.h"
@@ -27,19 +28,19 @@ float calculate_accuracy(Matrix predictions, Matrix targets) {
 int main() {
     srand(42);
     printf("--- 1. Loading Data (Diabetes) ---\n");
-    Matrix RawData = create_matrix_from_csv("pima-indians-diabetes.csv");
+    Matrix RawData = data_load_csv("pima-indians-diabetes.csv");
     printf("Loaded Shape: %dx%d\n", RawData.rows, RawData.columns);
 
     int n = RawData.rows;
     int input_cols = RawData.columns - 1;
     
-    Matrix X = create_matrix(n, input_cols);
-    Matrix y = create_matrix(n, 1);
-    slice_matrix(input_cols, 1, &RawData, &X, &y);
-    free_matrix(RawData); 
+    Matrix X = mat_create(n, input_cols);
+    Matrix y = mat_create(n, 1);
+    data_split_xy(input_cols, 1, &RawData, &X, &y);
+    mat_free(RawData); 
 
     printf("--- 2. Splitting ---\n");
-    DataSplit split = train_test_split(&X, &y, 0.2, true);
+    DataSplit split = data_train_test_split(&X, &y, 0.2, true);
 
     printf("--- 3. Normalizing X (scale fitted on train only) ---\n");
     MinMax scaler = minmax_fit(split.X_train);
@@ -56,7 +57,7 @@ int main() {
     printf("--- 5. Training Loop ---\n");
     for (int epoch = 0; epoch < epochs; epoch++) {
         Matrix output = layer_forward(&layer, split.X_train);
-        Matrix upstream_grad = create_matrix(output.rows, output.columns);
+        Matrix upstream_grad = mat_create(output.rows, output.columns);
 
         for(int i=0; i<output.rows * output.columns; i++) {
             upstream_grad.data[i] = output.data[i] - split.y_train.data[i];
@@ -64,9 +65,9 @@ int main() {
 
         Matrix dInput = layer_backward(&layer, upstream_grad, learning_rate);
 
-        free_matrix(output); 
-        free_matrix(upstream_grad);
-        free_matrix(dInput);
+        mat_free(output); 
+        mat_free(upstream_grad);
+        mat_free(dInput);
 
         if (epoch % 1000 == 0) {
             float loss = 0.0f;
@@ -81,13 +82,13 @@ int main() {
     
     printf("Test Accuracy: %.2f%%\n", acc * 100.0f);
 
-    free_matrix(test_pred);
-    free_matrix(X); 
-    free_matrix(y);     
-    free_matrix(split.X_train); 
-    free_matrix(split.y_train);
-    free_matrix(split.X_test); 
-    free_matrix(split.y_test);
+    mat_free(test_pred);
+    mat_free(X); 
+    mat_free(y);     
+    mat_free(split.X_train); 
+    mat_free(split.y_train);
+    mat_free(split.X_test); 
+    mat_free(split.y_test);
     layer_free(&layer);
 
     return 0;

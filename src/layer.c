@@ -6,16 +6,16 @@
 
 Layer create_layer(int input_size, int output_size, ActivationType activation) {
   Layer layer;
-  layer.weights = create_matrix(input_size, output_size);
-  layer.biases = create_matrix(1, output_size);
+  layer.weights = mat_create(input_size, output_size);
+  layer.biases = mat_create(1, output_size);
   layer.activation = activation;
   layer.input_cache.data = NULL;
   layer.output_cache.data = NULL;
 
-  initialize_weights(layer.weights);
+  mat_fill_random(layer.weights);
 
   // initialize biases with zeros
-  for (int i = 0; i < get_size(layer.biases); i++) {
+  for (int i = 0; i < mat_size(layer.biases); i++) {
     layer.biases.data[i] = 0.0f;
   }
 
@@ -41,8 +41,8 @@ Matrix layer_forward(Layer *layer, Matrix input) {
 }
 
 Matrix layer_backward(Layer *layer, Matrix upstream_grad, float learning_rate) {
-  Matrix dZ = create_matrix(upstream_grad.rows, upstream_grad.columns);
-  int size = get_size(dZ);
+  Matrix dZ = mat_create(upstream_grad.rows, upstream_grad.columns);
+  int size = mat_size(dZ);
 
   if (layer->activation == ACT_SIGMOID) {
 #pragma omp parallel for
@@ -63,7 +63,7 @@ Matrix layer_backward(Layer *layer, Matrix upstream_grad, float learning_rate) {
 
   Matrix input_T = mat_transpose(layer->input_cache);
   Matrix dW = ops_mat_mul(input_T, dZ);
-  Matrix db = create_matrix(1, dZ.columns);
+  Matrix db = mat_create(1, dZ.columns);
 
   for (int k = 0; k < db.rows * db.columns; k++)
     db.data[k] = 0.0f;
@@ -82,16 +82,16 @@ Matrix layer_backward(Layer *layer, Matrix upstream_grad, float learning_rate) {
   mat_add(layer->weights, dW);
   mat_add(layer->biases, db);
 
-  free_matrix(W_T);
-  free_matrix(dZ);
-  free_matrix(input_T);
-  free_matrix(dW);
-  free_matrix(db);
+  mat_free(W_T);
+  mat_free(dZ);
+  mat_free(input_T);
+  mat_free(dW);
+  mat_free(db);
 
   return dInput;
 }
 
 void layer_free(Layer *layer) {
-  free_matrix(layer->weights);
-  free_matrix(layer->biases);
+  mat_free(layer->weights);
+  mat_free(layer->biases);
 }

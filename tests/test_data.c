@@ -1,4 +1,5 @@
 #include "check.h"
+#include "data.h"
 #include "matrix.h"
 #include <stdlib.h>
 
@@ -6,7 +7,7 @@
 // and every original row must appear exactly once.
 static void test_shuffle_split(void) {
   int n = 767;
-  Matrix X = create_matrix(n, 2), y = create_matrix(n, 1);
+  Matrix X = mat_create(n, 2), y = mat_create(n, 1);
   for (int i = 0; i < n; i++) {
     X.data[i * 2] = i;
     X.data[i * 2 + 1] = 2 * i;
@@ -14,7 +15,7 @@ static void test_shuffle_split(void) {
   }
 
   srand(662); // the seed that made the old `rand() & (i + 1)` read past the end
-  DataSplit s = train_test_split(&X, &y, 0.2, true);
+  DataSplit s = data_train_test_split(&X, &y, 0.2, true);
   CHECK(s.X_train.rows + s.X_test.rows == n);
 
   int *seen = calloc(n, sizeof(int));
@@ -35,16 +36,16 @@ static void test_shuffle_split(void) {
   CHECK(moved > n / 2); // actually shuffled
 
   free(seen);
-  free_matrix(X);
-  free_matrix(y);
-  free_matrix(s.X_train);
-  free_matrix(s.y_train);
-  free_matrix(s.X_test);
-  free_matrix(s.y_test);
+  mat_free(X);
+  mat_free(y);
+  mat_free(s.X_train);
+  mat_free(s.y_train);
+  mat_free(s.X_test);
+  mat_free(s.y_test);
 }
 
 static void test_minmax(void) {
-  Matrix train = create_matrix(3, 2), test = create_matrix(1, 2);
+  Matrix train = mat_create(3, 2), test = mat_create(1, 2);
   float t[] = {1, 5, 2, 5, 3, 5}; // column 1 is constant
   for (int i = 0; i < 6; i++)
     train.data[i] = t[i];
@@ -60,8 +61,8 @@ static void test_minmax(void) {
   CHECK(test.data[0] == 1.5f);  // test data keeps the train scale
 
   minmax_free(s);
-  free_matrix(train);
-  free_matrix(test);
+  mat_free(train);
+  mat_free(test);
 }
 
 int main(void) {

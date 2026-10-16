@@ -1,17 +1,15 @@
 #include "matrix.h"
-#include <float.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-Matrix create_matrix(int rows, int columns) {
+Matrix mat_create(int rows, int columns) {
   Matrix m;
   m.rows = rows;
   m.columns = columns;
 
   // calloc zero-fills the memory (malloc leaves garbage) - mat_mul accumulates with +=
-  m.data = (float *)calloc(get_size(m), sizeof(float));
+  m.data = (float *)calloc(mat_size(m), sizeof(float));
 
   if (m.data == NULL) {
     fprintf(stderr, "Memory allocation failed!\n");
@@ -22,76 +20,19 @@ Matrix create_matrix(int rows, int columns) {
   return m;
 }
 
-Matrix matrix_view(float *data, int rows, int columns) {
+Matrix mat_view(float *data, int rows, int columns) {
   Matrix m = {.data = data, .rows = rows, .columns = columns, .owns_data = false};
   return m;
 }
 
-Matrix create_matrix_from_csv(const char *filename) {
-  FILE *fp = fopen(filename, "r");
-  if (fp == NULL) {
-    fprintf(stderr, "Error: Could not open file %s\n", filename);
-    exit(1);
-  }
+int mat_size(Matrix m) { return m.rows * m.columns; }
 
-  int rows = 0;
-  int columns = 0;
-  char buffer[10240];
-
-  if (fgets(buffer, sizeof(buffer), fp)) {
-    rows++;
-
-    char temp_buffer[10240];
-    strcpy(temp_buffer, buffer);
-
-    char *token = strtok(temp_buffer, ",");
-    while (token) {
-      columns++;
-      token = strtok(NULL, ",");
-    }
-  }
-
-  while (fgets(buffer, sizeof(buffer), fp)) {
-    rows++;
-  }
-
-  printf("CSV Loader: Detected %d rows, %d columns\n", rows, columns);
-
-  Matrix m = create_matrix(rows - 1, columns);
-  rewind(fp);
-
-  if (fgets(buffer, sizeof(buffer), fp) == NULL) {
-    fprintf(stderr, "Error: %s is empty\n", filename);
-    exit(1);
-  }
-
-  int i = 0;
-  while (fgets(buffer, sizeof(buffer), fp)) {
-    buffer[strcspn(buffer, "\n")] = 0;
-
-    int j = 0;
-    char *token = strtok(buffer, ",");
-
-    while (token && j < columns) {
-      m.data[i * columns + j] = atof(token);
-      token = strtok(NULL, ",");
-      j++;
-    }
-    i++;
-  }
-
-  fclose(fp);
-  return m;
-}
-
-int get_size(Matrix m) { return m.rows * m.columns; }
-
-void free_matrix(Matrix m) {
+void mat_free(Matrix m) {
   if (m.owns_data)
     free(m.data);
 }
 
-void print_matrix(Matrix m) {
+void mat_print(Matrix m) {
   for (int i = 0; i < m.rows; i++) {
     for (int j = 0; j < m.columns; j++) {
       int index = i * m.columns + j;
@@ -101,14 +42,14 @@ void print_matrix(Matrix m) {
   }
 }
 
-void initialize_weights(Matrix m) {
-  for (int i = 0; i < get_size(m); i++) {
+void mat_fill_random(Matrix m) {
+  for (int i = 0; i < mat_size(m); i++) {
     m.data[i] = (float)rand() / (float)RAND_MAX;
   }
 }
 
 Matrix mat_transpose(Matrix m) {
-  Matrix t = create_matrix(m.columns, m.rows);
+  Matrix t = mat_create(m.columns, m.rows);
 
   for (int i = 0; i < m.rows; i++) {
     for (int j = 0; j < m.columns; j++) {
@@ -122,11 +63,11 @@ Matrix mat_transpose(Matrix m) {
   return t;
 }
 
-Matrix matrix_add_bias(Matrix m) {
+Matrix mat_append_ones(Matrix m) {
   int new_rows = m.rows;
   int new_cols = m.columns + 1;
 
-  Matrix b = create_matrix(new_rows, new_cols);
+  Matrix b = mat_create(new_rows, new_cols);
 
   for (int i = 0; i < new_rows; i++) {
     for (int j = 0; j < m.columns; j++) {
@@ -154,115 +95,8 @@ void mat_add(Matrix a, Matrix b) {
   }
 }
 
-MinMax minmax_fit(Matrix X) {
-  MinMax s = {create_matrix(1, X.columns), create_matrix(1, X.columns)};
-
-  for (int j = 0; j < X.columns; j++) {
-    float min = FLT_MAX;
-    float max = -FLT_MAX;
-    for (int i = 0; i < X.rows; i++) {
-      float val = X.data[i * X.columns + j];
-      if (val < min)
-        min = val;
-      if (val > max)
-        max = val;
-    }
-
-    float range = max - min;
-    if (range < 0.00001f)
-      range = 1.0f; // constant column
-
-    s.min.data[j] = min;
-    s.range.data[j] = range;
-  }
-  return s;
-}
-
-void minmax_apply(MinMax s, Matrix *X) {
-  for (int i = 0; i < X->rows; i++) {
-    for (int j = 0; j < X->columns; j++) {
-      int idx = i * X->columns + j;
-      X->data[idx] = (X->data[idx] - s.min.data[j]) / s.range.data[j];
-    }
-  }
-}
-
-void minmax_free(MinMax s) {
-  free_matrix(s.min);
-  free_matrix(s.range);
-}
-
-void slice_matrix(int inputs_features, int output_features, Matrix *m, Matrix *X, Matrix *y) {
-  for (int i = 0; i < X->rows; i++) {
-    for (int j = 0; j < inputs_features; j++) {
-      X->data[i * X->columns + j] = m->data[i * m->columns + j];
-    }
-    for (int k = 0; k < output_features; k++) {
-      y->data[i * output_features + k] = m->data[i * m->columns + inputs_features + k];
-    }
-  }
-}
-
-void shuffle_samples(Matrix *X, Matrix *y) {
-  if (X->rows != y->rows) {
-    fprintf(stderr, "Error: X and y rows mismatch in shuffle!\n");
-    exit(1);
-  }
-
-  int n = X->rows;
-  int columns = X->columns;
-
-  for (int i = n - 1; i > 0; i--) {
-    int j = rand() % (i + 1);
-
-    float temp_y = y->data[i];
-    y->data[i] = y->data[j];
-    y->data[j] = temp_y;
-
-    for (int k = 0; k < columns; k++) {
-      float temp_x = X->data[i * columns + k];
-      X->data[i * columns + k] = X->data[j * columns + k];
-      X->data[j * columns + k] = temp_x;
-    }
-  }
-}
-
-DataSplit train_test_split(Matrix *X, Matrix *y, float test_size, bool shuffle) {
-  if (shuffle) {
-    shuffle_samples(X, y);
-  }
-
-  DataSplit split;
-
-  int n = X->rows;
-  int test_rows = (int)(n * test_size);
-  int train_rows = n - test_rows;
-
-  split.X_train = create_matrix(train_rows, X->columns);
-  split.y_train = create_matrix(train_rows, 1);
-  split.X_test = create_matrix(test_rows, X->columns);
-  split.y_test = create_matrix(test_rows, 1);
-
-  for (int i = 0; i < train_rows; i++) {
-    for (int j = 0; j < X->columns; j++) {
-      split.X_train.data[i * X->columns + j] = X->data[i * X->columns + j];
-    }
-    split.y_train.data[i] = y->data[i];
-  }
-
-  for (int i = 0; i < test_rows; i++) {
-    int src_idx = i + train_rows;
-    for (int j = 0; j < X->columns; j++) {
-      split.X_test.data[i * X->columns + j] = X->data[src_idx * X->columns + j];
-    }
-    split.y_test.data[i] = y->data[src_idx];
-  }
-
-  return split;
-}
-
 void mat_apply(Matrix *m, float (*func)(float)) {
-  for (int i = 0; i < get_size(*m); i++) {
+  for (int i = 0; i < mat_size(*m); i++) {
     m->data[i] = func(m->data[i]);
   }
 }

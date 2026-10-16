@@ -18,7 +18,7 @@ void print_softmax_results(Matrix m) {
 int main() {
   // We create a matrix [1 x 3] representing raw scores (logits)
   // for 3 different classes (e.g., Cat, Dog, Bird)
-  Matrix logits = create_matrix(1, 3);
+  Matrix logits = mat_create(1, 3);
 
   // Test Case 1: Balanced scores
   logits.data[0] = 1.0f;
@@ -47,6 +47,6 @@ int main() {
   ops_softmax(&logits);
   print_softmax_results(logits);
 
-  free_matrix(logits);
+  mat_free(logits);
   return 0;
 }

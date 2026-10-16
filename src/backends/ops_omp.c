@@ -11,7 +11,7 @@ Matrix mat_mul_omp(Matrix A, Matrix B) {
     exit(1);
   }
 
-  Matrix C = create_matrix(A.rows, B.columns);
+  Matrix C = mat_create(A.rows, B.columns);
 
 #pragma omp parallel for
   // i-k-j order: C[i][:] += A[i][k] * B[k][:]

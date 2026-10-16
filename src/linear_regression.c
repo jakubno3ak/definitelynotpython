@@ -5,16 +5,16 @@
 
 LinearRegression linreg_create(int input_features, int output_features, float learning_rate) {
   LinearRegression model;
-  model.W = create_matrix(input_features + 1, output_features);
-  initialize_weights(model.W);
+  model.W = mat_create(input_features + 1, output_features);
+  mat_fill_random(model.W);
   model.learning_rate = learning_rate;
   return model;
 }
 
 Matrix linreg_predict(LinearRegression model, Matrix inputs) {
-  Matrix InputWithBias = matrix_add_bias(inputs);
+  Matrix InputWithBias = mat_append_ones(inputs);
   Matrix result = ops_mat_mul(InputWithBias, model.W);
-  free_matrix(InputWithBias);
+  mat_free(InputWithBias);
   return result;
 }
 
@@ -23,19 +23,19 @@ static void update_weights(LinearRegression *model, Matrix Xt, Matrix Err, int n
   mat_scale(Grad, 1.0f / n_samples);
   mat_scale(Grad, -(model->learning_rate));
   mat_add(model->W, Grad);
-  free_matrix(Grad);
+  mat_free(Grad);
 }
 
 void linreg_fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
   printf("--- LinearRegression: Fitting(%d epochs) using %s ---\n", epochs, ops_get_backend_name());
-  Matrix X_bias = matrix_add_bias(X);
+  Matrix X_bias = mat_append_ones(X);
   Matrix Xt = mat_transpose(X_bias);
 
   for (int i = 0; i <= epochs; i++) {
     Matrix Pred = ops_mat_mul(X_bias, model->W);
-    Matrix Err = create_matrix(Pred.rows, Pred.columns);
+    Matrix Err = mat_create(Pred.rows, Pred.columns);
 
-    for (int j = 0; j < get_size(Pred); j++) {
+    for (int j = 0; j < mat_size(Pred); j++) {
       Err.data[j] = Pred.data[j] - Y.data[j];
     }
 
@@ -43,17 +43,17 @@ void linreg_fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
 
     if (i % (epochs / 10 + 1) == 0) {
       float mse = 0.0;
-      for (int k = 0; k < get_size(Err); k++)
+      for (int k = 0; k < mat_size(Err); k++)
         mse += Err.data[k] * Err.data[k];
       printf("Epoch %d | MSE: %f\n", i, mse / X.rows);
     }
 
-    free_matrix(Pred);
-    free_matrix(Err);
+    mat_free(Pred);
+    mat_free(Err);
   }
 
-  free_matrix(X_bias);
-  free_matrix(Xt);
+  mat_free(X_bias);
+  mat_free(Xt);
 }
 
 void linreg_validate(LinearRegression model, Matrix X_test, Matrix y_test) {
@@ -80,5 +80,5 @@ void linreg_validate(LinearRegression model, Matrix X_test, Matrix y_test) {
   printf("MSE: %.4f\n", mse);
   printf("MAE: %.4f k$ (Average Error: ~%.0f$)\n", mae, mae * 1000);
 
-  free_matrix(predictions);
+  mat_free(predictions);
 }

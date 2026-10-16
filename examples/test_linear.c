@@ -1,3 +1,4 @@
+#include "data.h"
 #include "linear_regression.h"
 #include "matrix.h"
 #include "ops.h"
@@ -8,20 +9,20 @@ int main() {
   ops_set_backend(BACKEND_OMP);
 
   printf("--- 1. Loading Data ---\n");
-  Matrix RawData = create_matrix_from_csv("boston.csv");
+  Matrix RawData = data_load_csv("boston.csv");
   printf("Loaded Shape: %dx%d\n", RawData.rows, RawData.columns);
 
   int n = RawData.rows;
   int input_cols = RawData.columns - 1;
 
-  Matrix X = create_matrix(n, input_cols);
-  Matrix y = create_matrix(n, 1);
+  Matrix X = mat_create(n, input_cols);
+  Matrix y = mat_create(n, 1);
 
-  slice_matrix(input_cols, 1, &RawData, &X, &y);
+  data_split_xy(input_cols, 1, &RawData, &X, &y);
 
-  free_matrix(RawData);
+  mat_free(RawData);
 
-  DataSplit split = train_test_split(&X, &y, 0.2, true);
+  DataSplit split = data_train_test_split(&X, &y, 0.2, true);
 
   printf("--- 2. Normalizing X (scale fitted on train only) ---\n");
   MinMax scaler = minmax_fit(split.X_train);
@@ -37,13 +38,13 @@ int main() {
   printf("--- 4. Validate Model ---\n");
   linreg_validate(model, split.X_test, split.y_test);
 
-  free_matrix(X);
-  free_matrix(y);
-  free_matrix(model.W);
-  free_matrix(split.X_train);
-  free_matrix(split.y_train);
-  free_matrix(split.X_test);
-  free_matrix(split.y_test);
+  mat_free(X);
+  mat_free(y);
+  mat_free(model.W);
+  mat_free(split.X_train);
+  mat_free(split.y_train);
+  mat_free(split.X_test);
+  mat_free(split.y_test);
 
   return 0;
 }

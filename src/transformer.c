@@ -42,7 +42,7 @@ void print_config(Config c, bool shared_weights) {
 static Matrix *layer_views(float *start, int n, int rows, int cols) {
   Matrix *views = malloc(n * sizeof(Matrix));
   for (int l = 0; l < n; l++) {
-    views[l] = matrix_view(start + l * rows * cols, rows, cols);
+    views[l] = mat_view(start + l * rows * cols, rows, cols);
   }
   return views;
 }
@@ -66,7 +66,7 @@ void load_transformer(Transformer *t, const char *path) {
   }
 
   float *ptr = t->data + sizeof(Config) / sizeof(float); // skip the header
-  t->token_embedding = matrix_view(ptr, t->config.vocab_size, t->config.dim);
+  t->token_embedding = mat_view(ptr, t->config.vocab_size, t->config.dim);
 
   ptr += t->config.vocab_size * t->config.dim;
 
@@ -97,13 +97,13 @@ void load_transformer(Transformer *t, const char *path) {
   t->w3 = layer_views(ptr, t->config.n_layers, t->config.hidden_dim, t->config.dim);
   ptr += t->config.n_layers * t->config.hidden_dim * t->config.dim;
 
-  t->rms_final = matrix_view(ptr, 1, t->config.dim);
+  t->rms_final = mat_view(ptr, 1, t->config.dim);
   ptr += t->config.dim;
 
   ptr += t->config.seq_len * (t->config.dim / t->config.n_heads); // skip unused freq_cis
 
-  t->wcls = t->shared_weights ? t->token_embedding
-                              : matrix_view(ptr, t->config.vocab_size, t->config.dim);
+  t->wcls =
+      t->shared_weights ? t->token_embedding : mat_view(ptr, t->config.vocab_size, t->config.dim);
   if (!t->shared_weights)
     ptr += t->config.vocab_size * t->config.dim;
 
