@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include "matrix.h"
 #include "logistic_regression.h"
 #include "ops.h"
 
 int main() {
-    srand(time(NULL));
+    srand(42);
     ops_set_backend(BACKEND_OMP); 
     
     printf("--- 1. Loading Data (Diabetes) ---\n");

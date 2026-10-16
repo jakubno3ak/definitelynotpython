@@ -25,7 +25,7 @@ float calculate_accuracy(Matrix predictions, Matrix targets) {
 }
 
 int main() {
-    srand(time(NULL));
+    srand(42);
     printf("--- 1. Loading Data (Diabetes) ---\n");
     Matrix RawData = create_matrix_from_csv("pima-indians-diabetes.csv");
     printf("Loaded Shape: %dx%d\n", RawData.rows, RawData.columns);

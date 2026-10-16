@@ -60,7 +60,10 @@ Matrix create_matrix_from_csv(const char *filename) {
   Matrix m = create_matrix(rows - 1, columns);
   rewind(fp);
 
-  fgets(buffer, sizeof(buffer), fp);
+  if (fgets(buffer, sizeof(buffer), fp) == NULL) {
+    fprintf(stderr, "Error: %s is empty\n", filename);
+    exit(1);
+  }
 
   int i = 0;
   while (fgets(buffer, sizeof(buffer), fp)) {
@@ -187,7 +190,9 @@ void slice_matrix(int inputs_features, int output_features, Matrix *m,
     for (int j = 0; j < inputs_features; j++) {
       X->data[i * X->columns + j] = m->data[i * m->columns + j];
     }
-    y->data[i] = m->data[i * m->columns + inputs_features];
+    for (int k = 0; k < output_features; k++) {
+      y->data[i * output_features + k] = m->data[i * m->columns + inputs_features + k];
+    }
   }
 }
 
@@ -201,7 +206,7 @@ void shuffle_samples(Matrix *X, Matrix *y) {
   int columns = X->columns;
 
   for (int i = n - 1; i > 0; i--) {
-    int j = rand() & (i + 1);
+    int j = rand() % (i + 1);
 
     float temp_y = y->data[i];
     y->data[i] = y->data[j];
