@@ -83,6 +83,8 @@ int main(void) {
   attention(&t, &state, 0, 0);
   CHECK_NEAR(state.att.data[0], 1.0f, 1e-6f);       // head 0: 100% on itself
   CHECK_NEAR(state.att.data[5 * 256], 1.0f, 1e-6f); // head 5
+  for (int i = 0; i < 288; i++)
+    CHECK(state.att_out.data[i] == state.v.data[i]); // one token: output = its own v
 
   run_state_free(&state);
   free_transformer(&t);

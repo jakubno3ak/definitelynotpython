@@ -140,6 +140,7 @@ RunState run_state_create(Config c) {
   state.v = mat_create(1, c.dim);
 
   state.att = mat_create(c.n_heads, c.seq_len);
+  state.att_out = mat_create(1, c.dim);
 
   state.n_layers = c.n_layers;
   state.key_cache = malloc(c.n_layers * sizeof(Matrix));
@@ -158,6 +159,7 @@ void run_state_free(RunState *state) {
   mat_free(state->k);
   mat_free(state->v);
   mat_free(state->att);
+  mat_free(state->att_out);
   for (int l = 0; l < state->n_layers; l++) {
     mat_free(state->key_cache[l]);
     mat_free(state->value_cache[l]);
@@ -196,15 +198,23 @@ void attention(Transformer *t, RunState *state, int layer, int pos) {
   int dim = t->config.dim;
   int head_size = dim / t->config.n_heads;
   for (int h = 0; h < t->config.n_heads; h++) {
-    float *q = state->q.data + h * head_size;
+    float *q_head = state->q.data + h * head_size;
     float *scores = state->att.data + h * t->config.seq_len;
     for (int p = 0; p <= pos; p++) {
-      float *k = state->key_cache[layer].data + p * dim + h * head_size;
+      float *k_head = state->key_cache[layer].data + p * dim + h * head_size;
       float dot = 0.0f;
       for (int i = 0; i < head_size; i++)
-        dot += q[i] * k[i];
+        dot += q_head[i] * k_head[i];
       scores[p] = dot / sqrtf(head_size);
     }
     kernel_softmax_row(scores, pos + 1);
+
+    float *out_head = state->att_out.data + h * head_size;
+    memset(out_head, 0, head_size * sizeof(float));
+    for (int p = 0; p <= pos; p++) {
+      float *v_head = state->value_cache[layer].data + p * dim + h * head_size;
+      for (int i = 0; i < head_size; i++)
+        out_head[i] += scores[p] * v_head[i];
+    }
   }
 }
