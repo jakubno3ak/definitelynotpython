@@ -137,6 +137,14 @@ RunState run_state_create(Config c) {
   state.q = mat_create(1, c.dim);
   state.k = mat_create(1, c.dim);
   state.v = mat_create(1, c.dim);
+
+  state.n_layers = c.n_layers;
+  state.key_cache = malloc(c.n_layers * sizeof(Matrix));
+  state.value_cache = malloc(c.n_layers * sizeof(Matrix));
+  for (int l = 0; l < c.n_layers; l++) {
+    state.key_cache[l] = mat_create(c.seq_len, c.dim);
+    state.value_cache[l] = mat_create(c.seq_len, c.dim);
+  }
   return state;
 }
 
@@ -146,6 +154,12 @@ void run_state_free(RunState *state) {
   mat_free(state->q);
   mat_free(state->k);
   mat_free(state->v);
+  for (int l = 0; l < state->n_layers; l++) {
+    mat_free(state->key_cache[l]);
+    mat_free(state->value_cache[l]);
+  }
+  free(state->key_cache);
+  free(state->value_cache);
 }
 
 void embed(Transformer *t, RunState *state, int token) {
@@ -166,4 +180,10 @@ void rmsnorm(Matrix out, Matrix x, Matrix weight) {
 
   for (int i = 0; i < x.columns; i++)
     out.data[i] = x.data[i] / rms * weight.data[i];
+}
+
+void kv_store(RunState *state, int layer, int pos) {
+  int dim = state->k.columns;
+  memcpy(state->key_cache[layer].data + pos * dim, state->k.data, dim * sizeof(float));
+  memcpy(state->value_cache[layer].data + pos * dim, state->v.data, dim * sizeof(float));
 }

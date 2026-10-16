@@ -75,6 +75,11 @@ int main(void) {
   CHECK_NEAR(state.v.data[1], 0.038565f, 1e-5f);
   CHECK_NEAR(state.v.data[2], 0.030018f, 1e-5f);
 
+  kv_store(&state, 0, 0); // layer 0, position 0 (BOS)
+  CHECK(state.key_cache[0].data[0] == state.k.data[0]);
+  CHECK(state.value_cache[0].data[287] == state.v.data[287]);
+  CHECK(state.key_cache[0].data[288] == 0.0f); // position 1 still empty
+
   run_state_free(&state);
   free_transformer(&t);
   return report("test_transformer");

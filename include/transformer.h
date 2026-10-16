@@ -35,11 +35,14 @@ typedef struct {
 } Transformer;
 
 typedef struct {
-  Matrix x;     // 1 x dim, the current token's vector
-  Matrix xnorm; // 1 x dim, x after RMSNorm
-  Matrix q;     // 1 x dim, attention query
-  Matrix k;     // 1 x dim, attention key
-  Matrix v;     // 1 x dim, attention value
+  Matrix x;            // 1 x dim, the current token's vector
+  Matrix xnorm;        // 1 x dim, x after RMSNorm
+  Matrix q;            // 1 x dim, attention query
+  Matrix k;            // 1 x dim, attention key
+  Matrix v;            // 1 x dim, attention value
+  Matrix *key_cache;   // n_layers, each seq_len x dim: k of every position so far
+  Matrix *value_cache; // n_layers, each seq_len x dim: v of every position so far
+  int n_layers;
 } RunState;
 
 Config read_config(const char *path, bool *shared_weights);
@@ -50,5 +53,6 @@ RunState run_state_create(Config c);
 void run_state_free(RunState *state);
 void embed(Transformer *t, RunState *state, int token);
 void rmsnorm(Matrix out, Matrix x, Matrix weight);
+void kv_store(RunState *state, int layer, int pos);
 
 #endif
