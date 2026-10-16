@@ -3,8 +3,28 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  test:
+  format:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format
+        run: pip install clang-format==21.1.8  # same version as local, versions format differently
+      - name: Check formatting
+        run: make format-check
+
+  test:
+    name: test (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # keep running the other variants when one fails
+      matrix:
+        include:
+          - name: release
+            flags: ""
+          - name: debug + sanitizers
+            flags: MODE=debug
+          - name: no BLAS
+            flags: BLAS=0
     steps:
       - uses: actions/checkout@v4
 
@@ -12,7 +32,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libopenblas-dev
-          pip install clang-format==21.1.8  # same version as local, versions format differently
 
       - name: Cache model
         uses: actions/cache@v4
@@ -23,14 +42,5 @@ jobs:
       - name: Download model
         run: make model
 
-      - name: Check formatting
-        run: make format-check
-
-      - name: Tests (release)
-        run: make test
-
-      - name: Tests (debug + AddressSanitizer/UBSan)
-        run: make MODE=debug test
-
-      - name: Tests without BLAS
-        run: make BLAS=0 test
+      - name: Tests
+        run: make ${{ matrix.flags }} test

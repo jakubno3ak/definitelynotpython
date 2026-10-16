@@ -3,6 +3,7 @@
 #   make run EX=examples/test_mlp.c    build & run an example
 #   make bench                         matrix multiplication benchmark
 #   make test                          build & run all tests (needs make model)
+#   make test-all                      tests in release, debug+sanitizers and BLAS=0 builds
 #   make format / make format-check    clang-format all C files / only check
 #   make MODE=debug run EX=...         -O0 -g + AddressSanitizer/UBSan
 #   make BLAS=0 run EX=...             build without OpenBLAS
@@ -43,11 +44,11 @@ MODEL_DIR  := models
 MODEL      := $(MODEL_DIR)/stories15M.bin
 TOKENIZER  := $(MODEL_DIR)/tokenizer.bin
 
-.PHONY: all run bench test format format-check examples data mnist model clean help
+.PHONY: all run bench test test-all format format-check examples data mnist model clean help
 .DEFAULT_GOAL := help
 
 help:
-	@sed -n '3,11p' Makefile | sed 's/^# \{0,1\}//'
+	@sed -n '3,12p' Makefile | sed 's/^# \{0,1\}//'
 
 # Library objects (compiled once, rebuilt only when changed)
 $(BUILD)/%.o: %.c
@@ -74,6 +75,11 @@ TESTS := $(patsubst %.c,$(BUILD)/bin/%,$(wildcard tests/*.c))
 
 test: $(TESTS) $(MODEL)
 	@fail=0; for t in $(TESTS); do ./$$t || fail=1; done; exit $$fail
+
+test-all:
+	$(MAKE) test
+	$(MAKE) MODE=debug test
+	$(MAKE) BLAS=0 test
 
 C_FILES := $(shell git ls-files '*.c' '*.h')
 
