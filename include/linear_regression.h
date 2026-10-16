@@ -8,15 +8,9 @@ typedef struct {
   float learning_rate;
 } LinearRegression;
 
-LinearRegression create_linear_regression(int input_features,
-                                          int output_features,
-                                          float learning_rate);
-void fit(LinearRegression *model, Matrix X, Matrix Y, int epochs);
-Matrix predict(LinearRegression model, Matrix input);
-void validate(LinearRegression model, Matrix X_test, Matrix y_test);
-
-void fit_logistic(LinearRegression *model, Matrix X, Matrix Y, int epochs);
-Matrix predict_proba(LinearRegression model, Matrix X);
-Matrix predict_class(LinearRegression model, Matrix X);
+LinearRegression linreg_create(int input_features, int output_features, float learning_rate);
+void linreg_fit(LinearRegression *model, Matrix X, Matrix Y, int epochs);
+Matrix linreg_predict(LinearRegression model, Matrix X);
+void linreg_validate(LinearRegression model, Matrix X_test, Matrix y_test);
 
 #endif

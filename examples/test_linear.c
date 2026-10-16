@@ -27,12 +27,12 @@ int main() {
   DataSplit split = train_test_split(&X, &y, 0.2, true);
 
   printf("--- 3. Training Model ---\n");
-  LinearRegression model = create_linear_regression(input_cols, 1, 0.01);
+  LinearRegression model = linreg_create(input_cols, 1, 0.01);
 
-  fit(&model, split.X_train, split.y_train, 10000);
+  linreg_fit(&model, split.X_train, split.y_train, 10000);
 
   printf("--- 4. Validate Model ---\n");
-  validate(model, split.X_test, split.y_test);
+  linreg_validate(model, split.X_test, split.y_test);
 
   free_matrix(X);
   free_matrix(y);

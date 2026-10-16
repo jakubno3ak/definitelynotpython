@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "matrix.h"
-#include "linear_regression.h"
+#include "logistic_regression.h"
 #include "ops.h"
 
 int main() {
@@ -30,13 +30,13 @@ int main() {
     DataSplit split = train_test_split(&X, &y, 0.2, true);
 
     printf("--- 4. Training Logistic Model ---\n");
-    LinearRegression model = create_linear_regression(input_cols, 1, 0.1); 
+    LogisticRegression model = logreg_create(input_cols, 1, 0.1); 
     
-    fit_logistic(&model, split.X_train, split.y_train, 10000); 
+    logreg_fit(&model, split.X_train, split.y_train, 10000); 
 
     printf("\n--- 5. Evaluation ---\n");
     
-    Matrix Predictions = predict_class(model, split.X_test);
+    Matrix Predictions = logreg_predict_class(model, split.X_test);
     
     int correct = 0;
     int total = split.X_test.rows;
