@@ -23,6 +23,17 @@ int main(void) {
   CHECK_NEAR(t.rms_final.data[0], 7.6768489f, 1e-6f);
   CHECK(t.wcls.data == t.token_embedding.data);
 
+  RunState state = run_state_create(c);
+  embed(&t, &state, 1); // BOS
+
+  CHECK(state.x.rows == 1 && state.x.columns == 288);
+  CHECK(state.x.owns_data);
+  CHECK(state.x.data != t.token_embedding.data + 288); // a copy, not a view
+  for (int i = 0; i < 288; i++)
+    CHECK(state.x.data[i] == t.token_embedding.data[288 + i]);
+  CHECK_NEAR(state.x.data[0], -0.0170964f, 1e-6f); // from od, byte 1180
+
+  run_state_free(&state);
   free_transformer(&t);
   return report("test_transformer");
 }

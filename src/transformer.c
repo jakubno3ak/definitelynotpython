@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -126,4 +127,22 @@ void free_transformer(Transformer *t) {
   free(t->w2);
   free(t->w3);
   munmap(t->data, t->file_size);
+}
+
+RunState run_state_create(Config c) {
+  RunState state;
+  state.x = mat_create(1, c.dim);
+  return state;
+}
+
+void run_state_free(RunState *state) { mat_free(state->x); }
+
+void embed(Transformer *t, RunState *state, int token) {
+  if (token < 0 || token >= t->config.vocab_size) {
+    fprintf(stderr, "Error: token %d outside vocabulary (0..%d)\n", token,
+            t->config.vocab_size - 1);
+    exit(1);
+  }
+  float *row = t->token_embedding.data + token * t->config.dim;
+  memcpy(state->x.data, row, t->config.dim * sizeof(float));
 }
