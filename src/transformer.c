@@ -104,6 +104,14 @@ void load_transformer(Transformer *t, const char *path) {
 
   t->wcls = t->shared_weights ? t->token_embedding
                               : matrix_view(ptr, t->config.vocab_size, t->config.dim);
+  if (!t->shared_weights) ptr += t->config.vocab_size * t->config.dim;
+
+  float *end = t->data + t->file_size / sizeof(float);
+  if (ptr != end) {
+    fprintf(stderr, "Error: weights end at float %ld, file has %ld floats\n",
+            (long)(ptr - t->data), (long)(end - t->data));
+    exit(1);
+  }
 }
 
 void free_transformer(Transformer *t) {
