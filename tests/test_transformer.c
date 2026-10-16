@@ -1,8 +1,28 @@
 #include "check.h"
 #include "transformer.h"
 
+static void test_rmsnorm_formula(void) {
+  Matrix x = mat_create(1, 3), w = mat_create(1, 3), out = mat_create(1, 3);
+  x.data[0] = 3;
+  x.data[1] = -4;
+  x.data[2] = 0;
+  for (int i = 0; i < 3; i++)
+    w.data[i] = 1.0f; // weights 1 = "change nothing", isolates the normalization
+
+  rmsnorm(out, x, w);
+  CHECK_NEAR(out.data[0], 1.03923f, 1e-5f);
+  CHECK_NEAR(out.data[1], -1.38564f, 1e-5f);
+  CHECK_NEAR(out.data[2], 0.0f, 1e-5f);
+
+  mat_free(x);
+  mat_free(w);
+  mat_free(out);
+}
+
 // Expected values were read straight from the file with `od` (see notes).
 int main(void) {
+  test_rmsnorm_formula();
+
   Transformer t;
   load_transformer(&t, "models/stories15M.bin"); // exits on end-of-file mismatch
 
@@ -32,6 +52,12 @@ int main(void) {
   for (int i = 0; i < 288; i++)
     CHECK(state.x.data[i] == t.token_embedding.data[288 + i]);
   CHECK_NEAR(state.x.data[0], -0.0170964f, 1e-6f); // from od, byte 1180
+
+  rmsnorm(state.xnorm, state.x, t.rms_att[0]);
+  CHECK_NEAR(state.xnorm.data[0], -0.577490f, 1e-5f);
+  CHECK_NEAR(state.xnorm.data[1], -0.456318f, 1e-5f);
+  CHECK_NEAR(state.xnorm.data[2], 0.252732f, 1e-5f);
+  CHECK(state.x.data[0] == t.token_embedding.data[288]); // x itself is unchanged
 
   run_state_free(&state);
   free_transformer(&t);

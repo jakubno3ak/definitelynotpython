@@ -35,7 +35,8 @@ typedef struct {
 } Transformer;
 
 typedef struct {
-  Matrix x; // 1 x dim, the current token's vector
+  Matrix x;     // 1 x dim, the current token's vector
+  Matrix xnorm; // 1 x dim, x after RMSNorm
 } RunState;
 
 Config read_config(const char *path, bool *shared_weights);
@@ -45,5 +46,6 @@ void free_transformer(Transformer *t);
 RunState run_state_create(Config c);
 void run_state_free(RunState *state);
 void embed(Transformer *t, RunState *state, int token);
+void rmsnorm(Matrix out, Matrix x, Matrix weight);
 
 #endif

@@ -1,5 +1,6 @@
 #include "transformer.h"
 #include <fcntl.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,10 +133,14 @@ void free_transformer(Transformer *t) {
 RunState run_state_create(Config c) {
   RunState state;
   state.x = mat_create(1, c.dim);
+  state.xnorm = mat_create(1, c.dim);
   return state;
 }
 
-void run_state_free(RunState *state) { mat_free(state->x); }
+void run_state_free(RunState *state) {
+  mat_free(state->x);
+  mat_free(state->xnorm);
+}
 
 void embed(Transformer *t, RunState *state, int token) {
   if (token < 0 || token >= t->config.vocab_size) {
@@ -145,4 +150,14 @@ void embed(Transformer *t, RunState *state, int token) {
   }
   float *row = t->token_embedding.data + token * t->config.dim;
   memcpy(state->x.data, row, t->config.dim * sizeof(float));
+}
+
+void rmsnorm(Matrix out, Matrix x, Matrix weight) {
+  float sum_sq = 0.0f;
+  for (int i = 0; i < x.columns; i++)
+    sum_sq += x.data[i] * x.data[i];
+  float rms = sqrtf(sum_sq / x.columns + 1e-5f);
+
+  for (int i = 0; i < x.columns; i++)
+    out.data[i] = x.data[i] / rms * weight.data[i];
 }
