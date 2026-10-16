@@ -38,6 +38,15 @@ void print_config(Config c, bool shared_weights) {
   printf("shared_weights: %s\n", shared_weights ? "yes" : "no");
 }
 
+// n views of rows x cols, stored back to back from start
+static Matrix *layer_views(float *start, int n, int rows, int cols) {
+  Matrix *views = malloc(n * sizeof(Matrix));
+  for (int l = 0; l < n; l++) {
+    views[l] = matrix_view(start + l * rows * cols, rows, cols);
+  }
+  return views;
+}
+
 void load_transformer(Transformer *t, const char *path) {
   t->config = read_config(path, &t->shared_weights);
 
@@ -61,35 +70,20 @@ void load_transformer(Transformer *t, const char *path) {
 
   ptr += t->config.vocab_size * t->config.dim;
 
-  t->rms_att = malloc(t->config.n_layers * sizeof(Matrix));
-  for (int l = 0; l < t->config.n_layers; l++) {
-    t->rms_att[l] = matrix_view(ptr, 1, t->config.dim);
-    ptr += t->config.dim;
-  }
+  t->rms_att = layer_views(ptr, t->config.n_layers, 1, t->config.dim);
+  ptr += t->config.n_layers * t->config.dim;
 
-  t->wq = malloc(t->config.n_layers * sizeof(Matrix));
-  for (int l = 0; l < t->config.n_layers; l++) {
-    t->wq[l] = matrix_view(ptr, t->config.dim, t->config.dim);
-    ptr += t->config.dim * t->config.dim;
-  }
+  t->wq = layer_views(ptr, t->config.n_layers, t->config.dim, t->config.dim);
+  ptr += t->config.n_layers * t->config.dim * t->config.dim;
 
-  t->wk = malloc(t->config.n_layers * sizeof(Matrix));
-  for (int l = 0; l < t->config.n_layers; l++) {
-    t->wk[l] = matrix_view(ptr, t->config.dim, t->config.dim);
-    ptr += t->config.dim * t->config.dim;
-  }
+  t->wk = layer_views(ptr, t->config.n_layers, t->config.dim, t->config.dim);
+  ptr += t->config.n_layers * t->config.dim * t->config.dim;
 
-  t->wv = malloc(t->config.n_layers * sizeof(Matrix));
-  for (int l = 0; l < t->config.n_layers; l++) {
-    t->wv[l] = matrix_view(ptr, t->config.dim, t->config.dim);
-    ptr += t->config.dim * t->config.dim;
-  }
+  t->wv = layer_views(ptr, t->config.n_layers, t->config.dim, t->config.dim);
+  ptr += t->config.n_layers * t->config.dim * t->config.dim;
 
-  t->wo = malloc(t->config.n_layers * sizeof(Matrix));
-  for (int l = 0; l < t->config.n_layers; l++) {
-    t->wo[l] = matrix_view(ptr, t->config.dim, t->config.dim);
-    ptr += t->config.dim * t->config.dim;
-  }
+  t->wo = layer_views(ptr, t->config.n_layers, t->config.dim, t->config.dim);
+  ptr += t->config.n_layers * t->config.dim * t->config.dim;
 }
 
 void free_transformer(Transformer *t) {
