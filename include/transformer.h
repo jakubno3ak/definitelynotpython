@@ -44,6 +44,7 @@ typedef struct {
   Matrix *value_cache; // n_layers, each seq_len x dim: v of every position so far
   Matrix att;          // n_heads x seq_len: attention scores, one row per head
   Matrix att_out;      // 1 x dim: attention output, heads side by side
+  Matrix att_proj;     // 1 x dim: wo · att_out
   int n_layers;
 } RunState;
 

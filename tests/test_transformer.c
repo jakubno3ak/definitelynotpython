@@ -97,6 +97,11 @@ int main(void) {
   for (int i = 0; i < 288; i++)
     CHECK(state.att_out.data[i] == state.v.data[i]); // one token: output = its own v
 
+  ops_matvec(state.att_proj, t.wo[0], state.att_out);
+  CHECK_NEAR(state.att_proj.data[0], 0.038377f, 1e-5f);
+  CHECK_NEAR(state.att_proj.data[1], -0.006377f, 1e-5f);
+  CHECK_NEAR(state.att_proj.data[2], 0.012379f, 1e-5f);
+
   run_state_free(&state);
 
   // Two tokens [BOS, " Once"], layer 0, with RoPE: matches the real model

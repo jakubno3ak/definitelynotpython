@@ -141,6 +141,7 @@ RunState run_state_create(Config c) {
 
   state.att = mat_create(c.n_heads, c.seq_len);
   state.att_out = mat_create(1, c.dim);
+  state.att_proj = mat_create(1, c.dim);
 
   state.n_layers = c.n_layers;
   state.key_cache = malloc(c.n_layers * sizeof(Matrix));
@@ -160,6 +161,7 @@ void run_state_free(RunState *state) {
   mat_free(state->v);
   mat_free(state->att);
   mat_free(state->att_out);
+  mat_free(state->att_proj);
   for (int l = 0; l < state->n_layers; l++) {
     mat_free(state->key_cache[l]);
     mat_free(state->value_cache[l]);
