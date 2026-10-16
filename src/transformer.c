@@ -99,6 +99,11 @@ void load_transformer(Transformer *t, const char *path) {
 
   t->rms_final = matrix_view(ptr, 1, t->config.dim);
   ptr += t->config.dim;
+
+  ptr += t->config.seq_len * (t->config.dim / t->config.n_heads); // skip unused freq_cis
+
+  t->wcls = t->shared_weights ? t->token_embedding
+                              : matrix_view(ptr, t->config.vocab_size, t->config.dim);
 }
 
 void free_transformer(Transformer *t) {

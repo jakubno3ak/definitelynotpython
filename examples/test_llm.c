@@ -32,6 +32,10 @@ int main(void) {
   Matrix f = t.rms_final;
   printf("rms_final                 %d x %d    %f %f %f\n", f.rows, f.columns, f.data[0], f.data[1], f.data[2]);
 
+  Matrix c = t.wcls;
+  printf("wcls                      %d x %d  same memory as token_embedding: %s\n", c.rows, c.columns,
+         c.data == t.token_embedding.data ? "yes" : "no");
+
   free_transformer(&t);
   return 0;
 }
