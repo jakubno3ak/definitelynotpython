@@ -1,4 +1,5 @@
 #include "transformer.h"
+#include "ops.h"
 #include "ops_kernels.h"
 #include <fcntl.h>
 #include <math.h>
@@ -236,4 +237,19 @@ void attention(Transformer *t, RunState *state, int layer, int pos) {
         out_head[i] += scores[p] * v_head[i];
     }
   }
+}
+
+void attention_block(Transformer *t, RunState *state, int layer, int pos) {
+  int head_size = t->config.dim / t->config.n_heads;
+
+  rmsnorm(state->xnorm, state->x, t->rms_att[layer]);
+  ops_matvec(state->q, t->wq[layer], state->xnorm);
+  ops_matvec(state->k, t->wk[layer], state->xnorm);
+  ops_matvec(state->v, t->wv[layer], state->xnorm);
+  rope(state->q, state->k, pos, head_size);
+  kv_store(state, layer, pos);
+  attention(t, state, layer, pos);
+  ops_matvec(state->att_proj, t->wo[layer], state->att_out);
+
+  mat_add(state->x, state->att_proj); // residual: x += attention result
 }

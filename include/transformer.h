@@ -59,5 +59,6 @@ void rmsnorm(Matrix out, Matrix x, Matrix weight);
 void rope(Matrix q, Matrix k, int pos, int head_size);
 void kv_store(RunState *state, int layer, int pos);
 void attention(Transformer *t, RunState *state, int layer, int pos);
+void attention_block(Transformer *t, RunState *state, int layer, int pos);
 
 #endif

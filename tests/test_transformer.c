@@ -20,17 +20,6 @@ static void test_rmsnorm_formula(void) {
   mat_free(out);
 }
 
-static void layer0_attention(Transformer *t, RunState *s, int token, int pos) {
-  embed(t, s, token);
-  rmsnorm(s->xnorm, s->x, t->rms_att[0]);
-  ops_matvec(s->q, t->wq[0], s->xnorm);
-  ops_matvec(s->k, t->wk[0], s->xnorm);
-  ops_matvec(s->v, t->wv[0], s->xnorm);
-  rope(s->q, s->k, pos, t->config.dim / t->config.n_heads);
-  kv_store(s, 0, pos);
-  attention(t, s, 0, pos);
-}
-
 // Expected values were read straight from the file with `od` (see notes).
 int main(void) {
   test_rmsnorm_formula();
@@ -106,8 +95,10 @@ int main(void) {
 
   // Two tokens [BOS, " Once"], layer 0, with RoPE: matches the real model
   RunState s2 = run_state_create(c);
-  layer0_attention(&t, &s2, 1, 0);              // BOS at position 0: leaves its k, v in the cache
-  layer0_attention(&t, &s2, 9038, 1);           // " Once" at position 1: looks at BOS and itself
+  embed(&t, &s2, 1);
+  attention_block(&t, &s2, 0, 0); // BOS at position 0: leaves its k, v in the cache
+  embed(&t, &s2, 9038);
+  attention_block(&t, &s2, 0, 1);               // " Once" at position 1: looks at BOS and itself
   CHECK_NEAR(s2.att.data[0], 0.682737f, 1e-5f); // head 0: 68.3% on BOS
   CHECK_NEAR(s2.att.data[1 * 256], 0.998380f, 1e-5f); // head 1: 99.8% on BOS
   CHECK_NEAR(s2.att.data[3 * 256], 0.144991f, 1e-5f); // head 3: 14.5% on BOS
@@ -115,6 +106,15 @@ int main(void) {
   CHECK_NEAR(s2.att.data[0] + s2.att.data[1], 1.0f, 1e-6f); // percentages sum to 1
   CHECK_NEAR(s2.att_out.data[0], 0.014552f, 1e-5f);         // mix of v
   run_state_free(&s2);
+
+  // Full attention block for BOS: x = embedding + wo · attention
+  RunState s3 = run_state_create(c);
+  embed(&t, &s3, 1);
+  attention_block(&t, &s3, 0, 0);
+  CHECK_NEAR(s3.x.data[0], 0.021281f, 1e-5f);
+  CHECK_NEAR(s3.x.data[1], -0.019908f, 1e-5f);
+  CHECK_NEAR(s3.x.data[2], 0.019118f, 1e-5f);
+  run_state_free(&s3);
   free_transformer(&t);
   return report("test_transformer");
 }
