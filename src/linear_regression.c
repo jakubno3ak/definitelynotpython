@@ -27,8 +27,7 @@ static void update_weights(LinearRegression *model, Matrix Xt, Matrix Err, int n
 }
 
 void linreg_fit(LinearRegression *model, Matrix X, Matrix Y, int epochs) {
-  printf("--- LinearRegression: Fitting(%d epochs) using %s ---\n", epochs,
-         ops_get_backend_name());
+  printf("--- LinearRegression: Fitting(%d epochs) using %s ---\n", epochs, ops_get_backend_name());
   Matrix X_bias = matrix_add_bias(X);
   Matrix Xt = mat_transpose(X_bias);
 

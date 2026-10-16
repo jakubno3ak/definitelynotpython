@@ -87,7 +87,8 @@ Matrix create_matrix_from_csv(const char *filename) {
 int get_size(Matrix m) { return m.rows * m.columns; }
 
 void free_matrix(Matrix m) {
-  if (m.owns_data) free(m.data);
+  if (m.owns_data)
+    free(m.data);
 }
 
 void print_matrix(Matrix m) {
@@ -161,12 +162,15 @@ MinMax minmax_fit(Matrix X) {
     float max = -FLT_MAX;
     for (int i = 0; i < X.rows; i++) {
       float val = X.data[i * X.columns + j];
-      if (val < min) min = val;
-      if (val > max) max = val;
+      if (val < min)
+        min = val;
+      if (val > max)
+        max = val;
     }
 
     float range = max - min;
-    if (range < 0.00001f) range = 1.0f; // constant column
+    if (range < 0.00001f)
+      range = 1.0f; // constant column
 
     s.min.data[j] = min;
     s.range.data[j] = range;
@@ -188,8 +192,7 @@ void minmax_free(MinMax s) {
   free_matrix(s.range);
 }
 
-void slice_matrix(int inputs_features, int output_features, Matrix *m,
-                  Matrix *X, Matrix *y) {
+void slice_matrix(int inputs_features, int output_features, Matrix *m, Matrix *X, Matrix *y) {
   for (int i = 0; i < X->rows; i++) {
     for (int j = 0; j < inputs_features; j++) {
       X->data[i * X->columns + j] = m->data[i * m->columns + j];
@@ -224,8 +227,7 @@ void shuffle_samples(Matrix *X, Matrix *y) {
   }
 }
 
-DataSplit train_test_split(Matrix *X, Matrix *y, float test_size,
-                           bool shuffle) {
+DataSplit train_test_split(Matrix *X, Matrix *y, float test_size, bool shuffle) {
   if (shuffle) {
     shuffle_samples(X, y);
   }

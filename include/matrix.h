@@ -26,8 +26,7 @@ void mat_scale(Matrix m, float n);
 void free_matrix(Matrix m);
 void print_matrix(Matrix m);
 void initialize_weights(Matrix m);
-void slice_matrix(int inputs_features, int output_features, Matrix *m,
-                  Matrix *X, Matrix *y);
+void slice_matrix(int inputs_features, int output_features, Matrix *m, Matrix *X, Matrix *y);
 void mat_apply(Matrix *m, float (*func)(float));
 int get_size(Matrix m);
 

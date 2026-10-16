@@ -1,62 +1,66 @@
+#include "logistic_regression.h"
+#include "matrix.h"
+#include "ops.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "matrix.h"
-#include "logistic_regression.h"
-#include "ops.h"
 
 int main() {
-    srand(42);
-    ops_set_backend(BACKEND_OMP); 
-    
-    printf("--- 1. Loading Data (Diabetes) ---\n");
-    Matrix RawData = create_matrix_from_csv("pima-indians-diabetes.csv");
-    printf("Loaded Shape: %dx%d\n", RawData.rows, RawData.columns);
+  srand(42);
+  ops_set_backend(BACKEND_OMP);
 
-    int n = RawData.rows;
-    int input_cols = RawData.columns - 1;
-    
-    Matrix X = create_matrix(n, input_cols);
-    Matrix y = create_matrix(n, 1);
+  printf("--- 1. Loading Data (Diabetes) ---\n");
+  Matrix RawData = create_matrix_from_csv("pima-indians-diabetes.csv");
+  printf("Loaded Shape: %dx%d\n", RawData.rows, RawData.columns);
 
-    slice_matrix(input_cols, 1, &RawData, &X, &y);
-    free_matrix(RawData); 
+  int n = RawData.rows;
+  int input_cols = RawData.columns - 1;
 
-    printf("--- 2. Splitting ---\n");
-    DataSplit split = train_test_split(&X, &y, 0.2, true);
+  Matrix X = create_matrix(n, input_cols);
+  Matrix y = create_matrix(n, 1);
 
-    printf("--- 3. Normalizing X (scale fitted on train only) ---\n");
-    MinMax scaler = minmax_fit(split.X_train);
-    minmax_apply(scaler, &split.X_train);
-    minmax_apply(scaler, &split.X_test);
-    minmax_free(scaler);
+  slice_matrix(input_cols, 1, &RawData, &X, &y);
+  free_matrix(RawData);
 
-    printf("--- 4. Training Logistic Model ---\n");
-    LogisticRegression model = logreg_create(input_cols, 1, 0.1); 
-    
-    logreg_fit(&model, split.X_train, split.y_train, 10000); 
+  printf("--- 2. Splitting ---\n");
+  DataSplit split = train_test_split(&X, &y, 0.2, true);
 
-    printf("\n--- 5. Evaluation ---\n");
-    
-    Matrix Predictions = logreg_predict_class(model, split.X_test);
-    
-    int correct = 0;
-    int total = split.X_test.rows;
+  printf("--- 3. Normalizing X (scale fitted on train only) ---\n");
+  MinMax scaler = minmax_fit(split.X_train);
+  minmax_apply(scaler, &split.X_train);
+  minmax_apply(scaler, &split.X_test);
+  minmax_free(scaler);
 
-    for(int i=0; i<total; i++) {
-        float pred = Predictions.data[i];
-        float actual = split.y_test.data[i];
+  printf("--- 4. Training Logistic Model ---\n");
+  LogisticRegression model = logreg_create(input_cols, 1, 0.1);
 
-        if(pred == actual) {
-            correct++;
-        }
+  logreg_fit(&model, split.X_train, split.y_train, 10000);
+
+  printf("\n--- 5. Evaluation ---\n");
+
+  Matrix Predictions = logreg_predict_class(model, split.X_test);
+
+  int correct = 0;
+  int total = split.X_test.rows;
+
+  for (int i = 0; i < total; i++) {
+    float pred = Predictions.data[i];
+    float actual = split.y_test.data[i];
+
+    if (pred == actual) {
+      correct++;
     }
+  }
 
-    printf("Accuracy: %.2f%% (%d/%d)\n", (float)correct/total * 100.0, correct, total);
+  printf("Accuracy: %.2f%% (%d/%d)\n", (float)correct / total * 100.0, correct, total);
 
-    free_matrix(X); free_matrix(y); free_matrix(model.W);
-    free_matrix(split.X_train); free_matrix(split.y_train);
-    free_matrix(split.X_test); free_matrix(split.y_test);
-    free_matrix(Predictions);
+  free_matrix(X);
+  free_matrix(y);
+  free_matrix(model.W);
+  free_matrix(split.X_train);
+  free_matrix(split.y_train);
+  free_matrix(split.X_test);
+  free_matrix(split.y_test);
+  free_matrix(Predictions);
 
-    return 0;
+  return 0;
 }
