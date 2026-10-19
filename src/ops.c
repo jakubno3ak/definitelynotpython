@@ -50,7 +50,13 @@ void ops_matvec(Matrix out, Matrix W, Matrix x) {
             mat_size(x), mat_size(out));
     exit(1);
   }
-  matvec_naive(out, W, x); // only naive so far, OpenMP/BLAS come with the tokens/s benchmark
+  switch (CURRENT_BACKEND) {
+  case BACKEND_OMP:
+    matvec_omp(out, W, x);
+    break;
+  default: // BLAS and CUDA matvec not implemented yet
+    matvec_naive(out, W, x);
+  }
 }
 
 void ops_add_bias(Matrix *m, Matrix *bias) {

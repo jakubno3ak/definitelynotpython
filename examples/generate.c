@@ -1,9 +1,14 @@
+#include "ops.h"
 #include "tokenizer.h"
 #include "transformer.h"
 #include <omp.h>
 #include <stdio.h>
+#include <string.h>
 
-int main(void) {
+// Usage: generate [naive|omp]
+int main(int argc, char **argv) {
+  if (argc > 1 && strcmp(argv[1], "omp") == 0)
+    ops_set_backend(BACKEND_OMP);
   Transformer t;
   load_transformer(&t, "models/stories15M.bin");
   Tokenizer tok;
@@ -27,8 +32,8 @@ int main(void) {
   double seconds = omp_get_wtime() - start;
   double tok_s = generated / seconds;
   double gb_s = tok_s * t.file_size / 1e9; // all weights are read once per token
-  fprintf(stderr, "--- %d tokens in %.2f s: %.1f tokens/s, %.1f GB/s of weights ---\n", generated,
-          seconds, tok_s, gb_s);
+  fprintf(stderr, "--- %s: %d tokens in %.2f s: %.1f tokens/s, %.1f GB/s of weights ---\n",
+          ops_get_backend_name(), generated, seconds, tok_s, gb_s);
   double other = seconds - state.t_matvec - state.t_attention;
   fprintf(stderr, "    matvec %.2f s (%.0f%%), attention %.2f s (%.0f%%), other %.2f s (%.0f%%)\n",
           state.t_matvec, 100 * state.t_matvec / seconds, state.t_attention,

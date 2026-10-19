@@ -46,11 +46,12 @@ so every access lands on a new cache line. `i-k-j` computes `C[i][:] += A[i][k] 
 reading B and C row by row (sequential memory, auto-vectorized by the compiler).
 
 #### LLM inference: TinyStories 15M
-`make run EX=examples/generate.c` (221 tokens)
+`make run EX=examples/generate.c [ARGS=omp]`
 
 | matvec | tokens/s | time split |
 |---|---|---|
 | naive, 1 thread | 81 | matvec 96%, attention 2%, other 2% |
+| OpenMP, 6 threads | 177 | matvec 89%, attention 4%, other 7% |
 
 ### Build and run
 ```bash

@@ -49,6 +49,10 @@ int main(void) {
     x.data[i] = xv[i];
   ops_matvec(out, W, x);
   CHECK(out.data[0] == 7.0f && out.data[1] == 16.0f);
+  ops_set_backend(BACKEND_OMP);
+  ops_matvec(out, W, x);
+  CHECK(out.data[0] == 7.0f && out.data[1] == 16.0f);
+  ops_set_backend(BACKEND_NAIVE);
   mat_free(W);
   mat_free(x);
   mat_free(out);

@@ -1,6 +1,6 @@
 # definitelynotpython - build system
 #
-#   make run EX=examples/test_mlp.c    build & run an example
+#   make run EX=examples/test_mlp.c    build & run an example (ARGS=... passes arguments)
 #   make bench                         matrix multiplication benchmark
 #   make test                          build & run all tests (needs make model)
 #   make test-all                      tests in release, debug+sanitizers and BLAS=0 builds
@@ -66,7 +66,7 @@ all: examples $(BUILD)/bin/benchmark
 
 run: $(BUILD)/bin/$(basename $(EX)) $(DATA)
 	@test -n "$(EX)" || { echo "Usage: make run EX=examples/<file>.c"; exit 1; }
-	./$<
+	./$< $(ARGS)
 
 bench: $(BUILD)/bin/benchmark
 	./$<
