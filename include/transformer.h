@@ -49,6 +49,8 @@ typedef struct {
   Matrix ffn_b;        // 1 x hidden_dim: w3 · xnorm (the gate)
   Matrix ffn_out;      // 1 x dim: w2 · ffn_a
   Matrix logits;       // 1 x vocab_size: one score per token in the vocabulary
+  double t_matvec;     // seconds spent in matvec (sum over all calls)
+  double t_attention;  // seconds spent in attention (sum over all calls)
   int n_layers;
 } RunState;
 

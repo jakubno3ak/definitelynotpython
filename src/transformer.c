@@ -3,6 +3,7 @@
 #include "ops_kernels.h"
 #include <fcntl.h>
 #include <math.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -148,6 +149,8 @@ RunState run_state_create(Config c) {
   state.ffn_out = mat_create(1, c.dim);
   state.logits = mat_create(1, c.vocab_size);
 
+  state.t_matvec = 0;
+  state.t_attention = 0;
   state.n_layers = c.n_layers;
   state.key_cache = malloc(c.n_layers * sizeof(Matrix));
   state.value_cache = malloc(c.n_layers * sizeof(Matrix));
@@ -252,29 +255,37 @@ void attention(Transformer *t, RunState *state, int layer, int pos) {
   }
 }
 
+static void timed_matvec(RunState *state, Matrix out, Matrix W, Matrix x) {
+  double start = omp_get_wtime();
+  ops_matvec(out, W, x);
+  state->t_matvec += omp_get_wtime() - start;
+}
+
 void attention_block(Transformer *t, RunState *state, int layer, int pos) {
   int head_size = t->config.dim / t->config.n_heads;
 
   rmsnorm(state->xnorm, state->x, t->rms_att[layer]);
-  ops_matvec(state->q, t->wq[layer], state->xnorm);
-  ops_matvec(state->k, t->wk[layer], state->xnorm);
-  ops_matvec(state->v, t->wv[layer], state->xnorm);
+  timed_matvec(state, state->q, t->wq[layer], state->xnorm);
+  timed_matvec(state, state->k, t->wk[layer], state->xnorm);
+  timed_matvec(state, state->v, t->wv[layer], state->xnorm);
   rope(state->q, state->k, pos, head_size);
   kv_store(state, layer, pos);
+  double start = omp_get_wtime();
   attention(t, state, layer, pos);
-  ops_matvec(state->att_proj, t->wo[layer], state->att_out);
+  state->t_attention += omp_get_wtime() - start;
+  timed_matvec(state, state->att_proj, t->wo[layer], state->att_out);
 
   mat_add(state->x, state->att_proj); // residual: x += attention result
 }
 
 void mlp_block(Transformer *t, RunState *state, int layer) {
   rmsnorm(state->xnorm, state->x, t->rms_ffn[layer]);
-  ops_matvec(state->ffn_a, t->w1[layer], state->xnorm);
-  ops_matvec(state->ffn_b, t->w3[layer], state->xnorm);
+  timed_matvec(state, state->ffn_a, t->w1[layer], state->xnorm);
+  timed_matvec(state, state->ffn_b, t->w3[layer], state->xnorm);
   silu(state->ffn_a);
   for (int i = 0; i < mat_size(state->ffn_a); i++)
     state->ffn_a.data[i] *= state->ffn_b.data[i]; // gate
-  ops_matvec(state->ffn_out, t->w2[layer], state->ffn_a);
+  timed_matvec(state, state->ffn_out, t->w2[layer], state->ffn_a);
 
   mat_add(state->x, state->ffn_out); // residual: x += MLP result
 }
@@ -286,7 +297,7 @@ void forward(Transformer *t, RunState *state, int token, int pos) {
     mlp_block(t, state, l);
   }
   rmsnorm(state->xnorm, state->x, t->rms_final);
-  ops_matvec(state->logits, t->wcls, state->xnorm);
+  timed_matvec(state, state->logits, t->wcls, state->xnorm);
 }
 
 int argmax(Matrix logits) {

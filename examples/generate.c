@@ -29,6 +29,10 @@ int main(void) {
   double gb_s = tok_s * t.file_size / 1e9; // all weights are read once per token
   fprintf(stderr, "--- %d tokens in %.2f s: %.1f tokens/s, %.1f GB/s of weights ---\n", generated,
           seconds, tok_s, gb_s);
+  double other = seconds - state.t_matvec - state.t_attention;
+  fprintf(stderr, "    matvec %.2f s (%.0f%%), attention %.2f s (%.0f%%), other %.2f s (%.0f%%)\n",
+          state.t_matvec, 100 * state.t_matvec / seconds, state.t_attention,
+          100 * state.t_attention / seconds, other, 100 * other / seconds);
 
   run_state_free(&state);
   tokenizer_free(&tok);

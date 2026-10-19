@@ -29,8 +29,11 @@ sudo apt-get update
 sudo apt-get install libopenblas-dev
 ```
 
-### Benchmarks - matrix multiplication (1024×1024, float32)
-Intel i5-9600K (6 cores), `-O3 -march=native` (max optimizations + AVX2). Best of 5 runs, `make bench`.
+### Benchmarks
+Intel i5-9600K (6 cores), `-O3 -march=native` (max optimizations + AVX2).
+
+#### Matrix multiplication (1024×1024, float32)
+Best of 5 runs, `make bench`.
 
 | Backend | Before (i-j-k loops) | Now | GFLOP/s (now) |
 |---|---|---|---|
@@ -41,6 +44,13 @@ Intel i5-9600K (6 cores), `-O3 -march=native` (max optimizations + AVX2). Best o
 **Loop order matters (~13x).** Matrices are stored row-major. `i-j-k` reads B column by column,
 so every access lands on a new cache line. `i-k-j` computes `C[i][:] += A[i][k] * B[k][:]`,
 reading B and C row by row (sequential memory, auto-vectorized by the compiler).
+
+#### LLM inference: TinyStories 15M
+`make run EX=examples/generate.c` (221 tokens)
+
+| matvec | tokens/s | time split |
+|---|---|---|
+| naive, 1 thread | 81 | matvec 96%, attention 2%, other 2% |
 
 ### Build and run
 ```bash
