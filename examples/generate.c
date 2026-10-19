@@ -1,5 +1,6 @@
 #include "tokenizer.h"
 #include "transformer.h"
+#include <omp.h>
 #include <stdio.h>
 
 int main(void) {
@@ -10,6 +11,8 @@ int main(void) {
   RunState state = run_state_create(t.config);
 
   int token = 1; // BOS
+  int generated = 0;
+  double start = omp_get_wtime();
   for (int pos = 0; pos < t.config.seq_len; pos++) {
     forward(&t, &state, token, pos);
     int next = argmax(state.logits);
@@ -17,8 +20,15 @@ int main(void) {
       break;
     print_token(&tok, token, next);
     token = next;
+    generated++;
   }
   printf("\n");
+
+  double seconds = omp_get_wtime() - start;
+  double tok_s = generated / seconds;
+  double gb_s = tok_s * t.file_size / 1e9; // all weights are read once per token
+  fprintf(stderr, "--- %d tokens in %.2f s: %.1f tokens/s, %.1f GB/s of weights ---\n", generated,
+          seconds, tok_s, gb_s);
 
   run_state_free(&state);
   tokenizer_free(&tok);
