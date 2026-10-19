@@ -1,6 +1,7 @@
 #include "tokenizer.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void read_or_die(void *dst, size_t size, FILE *f) {
   if (fread(dst, size, 1, f) != 1) {
@@ -44,4 +45,14 @@ void tokenizer_free(Tokenizer *tok) {
     free(tok->vocab[i]);
   free(tok->vocab);
   free(tok->scores);
+}
+
+void print_token(Tokenizer *tok, int prev, int token) {
+  const char *piece = tokenizer_decode(tok, token);
+  if (prev == 1 && piece[0] == ' ')
+    piece++; // story start: drop the leading space
+  if (strcmp(piece, "<0x0A>") == 0)
+    piece = "\n"; // byte token for a newline
+  printf("%s", piece);
+  fflush(stdout);
 }

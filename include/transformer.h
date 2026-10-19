@@ -67,5 +67,6 @@ void attention(Transformer *t, RunState *state, int layer, int pos);
 void attention_block(Transformer *t, RunState *state, int layer, int pos);
 void mlp_block(Transformer *t, RunState *state, int layer);
 void forward(Transformer *t, RunState *state, int token, int pos);
+int argmax(Matrix logits);
 
 #endif

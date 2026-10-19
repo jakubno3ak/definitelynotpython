@@ -288,3 +288,11 @@ void forward(Transformer *t, RunState *state, int token, int pos) {
   rmsnorm(state->xnorm, state->x, t->rms_final);
   ops_matvec(state->logits, t->wcls, state->xnorm);
 }
+
+int argmax(Matrix logits) {
+  int best = 0;
+  for (int i = 1; i < mat_size(logits); i++)
+    if (logits.data[i] > logits.data[best])
+      best = i;
+  return best;
+}

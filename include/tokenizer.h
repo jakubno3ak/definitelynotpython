@@ -11,5 +11,6 @@ typedef struct {
 void tokenizer_load(Tokenizer *tok, const char *path, int vocab_size);
 const char *tokenizer_decode(Tokenizer *tok, int token);
 void tokenizer_free(Tokenizer *tok);
+void print_token(Tokenizer *tok, int prev, int token);
 
 #endif

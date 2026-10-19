@@ -151,6 +151,18 @@ int main(void) {
       best = i;
   CHECK(best == 9038);
   run_state_free(&s5);
+
+  // Greedy generation from BOS matches an independent Python implementation:
+  // " Once upon a time, there was a little girl named L"
+  int expected[] = {9038, 2501, 263, 931, 29892, 727, 471, 263, 2217, 7826, 4257, 365};
+  RunState s6 = run_state_create(c);
+  int token = 1;
+  for (int pos = 0; pos < 12; pos++) {
+    forward(&t, &s6, token, pos);
+    token = argmax(s6.logits);
+    CHECK(token == expected[pos]);
+  }
+  run_state_free(&s6);
   free_transformer(&t);
   return report("test_transformer");
 }
