@@ -57,15 +57,10 @@ More: `make bench` (matmul benchmark), `make MODE=debug ...` (AddressSanitizer/U
 - **Tested against independent references:** raw file bytes and a separate Python implementation.
 - **Classic ML:** linear and logistic regression, MLP with manual backprop ([docs/classic](docs/classic/)).
 
-How the pieces fit together: [docs/architecture.md](docs/architecture.md).
-
 ## Layout
 ```
 include/, src/      library: matrix, data, ops + backends, transformer, tokenizer
 examples/           runnable programs (generate.c, classic ML examples)
 tests/              one test per module, run in 3 build variants in CI
-docs/               architecture, classic ML write-ups
+docs/               classic ML write-ups
 ```
-
-## License
-MIT
