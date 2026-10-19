@@ -54,7 +54,10 @@ void ops_matvec(Matrix out, Matrix W, Matrix x) {
   case BACKEND_OMP:
     matvec_omp(out, W, x);
     break;
-  default: // BLAS and CUDA matvec not implemented yet
+  case BACKEND_BLAS:
+    matvec_blas(out, W, x);
+    break;
+  default: // CUDA matvec not implemented yet
     matvec_naive(out, W, x);
   }
 }

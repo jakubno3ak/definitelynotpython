@@ -49,10 +49,26 @@ int main(void) {
     x.data[i] = xv[i];
   ops_matvec(out, W, x);
   CHECK(out.data[0] == 7.0f && out.data[1] == 16.0f);
-  ops_set_backend(BACKEND_OMP);
-  ops_matvec(out, W, x);
-  CHECK(out.data[0] == 7.0f && out.data[1] == 16.0f);
+  for (int k = 1; k < 3; k++) {
+    ops_set_backend(backends[k]);
+    ops_matvec(out, W, x);
+    CHECK(out.data[0] == 7.0f && out.data[1] == 16.0f);
+  }
+
+  // matvec on a random 64x48 matrix: OpenMP and BLAS must match naive
+  Matrix v = mat_create(1, 48), ref_v = mat_create(1, 64), got_v = mat_create(1, 64);
+  mat_fill_random(v);
   ops_set_backend(BACKEND_NAIVE);
+  ops_matvec(ref_v, X, v);
+  for (int k = 1; k < 3; k++) {
+    ops_set_backend(backends[k]);
+    ops_matvec(got_v, X, v);
+    check_close(ref_v, got_v);
+  }
+  ops_set_backend(BACKEND_NAIVE);
+  mat_free(v);
+  mat_free(ref_v);
+  mat_free(got_v);
   mat_free(W);
   mat_free(x);
   mat_free(out);

@@ -5,10 +5,12 @@
 #include <stdio.h>
 #include <string.h>
 
-// Usage: generate [naive|omp]
+// Usage: generate [naive|omp|blas]
 int main(int argc, char **argv) {
   if (argc > 1 && strcmp(argv[1], "omp") == 0)
     ops_set_backend(BACKEND_OMP);
+  if (argc > 1 && strcmp(argv[1], "blas") == 0)
+    ops_set_backend(BACKEND_BLAS);
   Transformer t;
   load_transformer(&t, "models/stories15M.bin");
   Tokenizer tok;
