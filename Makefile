@@ -73,7 +73,7 @@ bench: $(BUILD)/bin/benchmark
 
 TESTS := $(patsubst %.c,$(BUILD)/bin/%,$(wildcard tests/*.c))
 
-test: $(TESTS) $(MODEL)
+test: $(TESTS) $(MODEL) $(TOKENIZER)
 	@fail=0; for t in $(TESTS); do ./$$t || fail=1; done; exit $$fail
 
 test-all:
