@@ -45,6 +45,10 @@ typedef struct {
   Matrix att;          // n_heads x seq_len: attention scores, one row per head
   Matrix att_out;      // 1 x dim: attention output, heads side by side
   Matrix att_proj;     // 1 x dim: wo · att_out
+  Matrix ffn_a;        // 1 x hidden_dim: w1 · xnorm, then SiLU, then * ffn_b
+  Matrix ffn_b;        // 1 x hidden_dim: w3 · xnorm (the gate)
+  Matrix ffn_out;      // 1 x dim: w2 · ffn_a
+  Matrix logits;       // 1 x vocab_size: one score per token in the vocabulary
   int n_layers;
 } RunState;
 
@@ -56,9 +60,12 @@ RunState run_state_create(Config c);
 void run_state_free(RunState *state);
 void embed(Transformer *t, RunState *state, int token);
 void rmsnorm(Matrix out, Matrix x, Matrix weight);
+void silu(Matrix m);
 void rope(Matrix q, Matrix k, int pos, int head_size);
 void kv_store(RunState *state, int layer, int pos);
 void attention(Transformer *t, RunState *state, int layer, int pos);
 void attention_block(Transformer *t, RunState *state, int layer, int pos);
+void mlp_block(Transformer *t, RunState *state, int layer);
+void forward(Transformer *t, RunState *state, int token, int pos);
 
 #endif

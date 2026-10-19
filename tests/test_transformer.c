@@ -20,9 +20,22 @@ static void test_rmsnorm_formula(void) {
   mat_free(out);
 }
 
+static void test_silu(void) {
+  Matrix z = mat_create(1, 3);
+  z.data[0] = 2;
+  z.data[1] = 0;
+  z.data[2] = -2;
+  silu(z);
+  CHECK_NEAR(z.data[0], 1.761594f, 1e-5f);
+  CHECK_NEAR(z.data[1], 0.0f, 1e-6f);
+  CHECK_NEAR(z.data[2], -0.238406f, 1e-5f);
+  mat_free(z);
+}
+
 // Expected values were read straight from the file with `od` (see notes).
 int main(void) {
   test_rmsnorm_formula();
+  test_silu();
 
   Transformer t;
   load_transformer(&t, "models/stories15M.bin"); // exits on end-of-file mismatch
@@ -115,6 +128,29 @@ int main(void) {
   CHECK_NEAR(s3.x.data[1], -0.019908f, 1e-5f);
   CHECK_NEAR(s3.x.data[2], 0.019118f, 1e-5f);
   run_state_free(&s3);
+
+  // Whole block 0 for BOS: attention + MLP
+  RunState s4 = run_state_create(c);
+  embed(&t, &s4, 1);
+  attention_block(&t, &s4, 0, 0);
+  mlp_block(&t, &s4, 0);
+  CHECK_NEAR(s4.x.data[0], 0.038987f, 1e-5f);
+  CHECK_NEAR(s4.x.data[1], 0.065597f, 1e-5f);
+  CHECK_NEAR(s4.x.data[2], -0.080732f, 1e-5f);
+  run_state_free(&s4);
+
+  // Whole model for BOS: the most likely next token is " Once" (id 9038)
+  RunState s5 = run_state_create(c);
+  forward(&t, &s5, 1, 0);
+  CHECK_NEAR(s5.logits.data[0], -6.7908f, 1e-3f);
+  CHECK_NEAR(s5.logits.data[1], 0.8281f, 1e-3f);
+  CHECK_NEAR(s5.logits.data[9038], 12.29f, 1e-2f);
+  int best = 0;
+  for (int i = 1; i < c.vocab_size; i++)
+    if (s5.logits.data[i] > s5.logits.data[best])
+      best = i;
+  CHECK(best == 9038);
+  run_state_free(&s5);
   free_transformer(&t);
   return report("test_transformer");
 }

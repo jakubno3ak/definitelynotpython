@@ -143,6 +143,10 @@ RunState run_state_create(Config c) {
   state.att = mat_create(c.n_heads, c.seq_len);
   state.att_out = mat_create(1, c.dim);
   state.att_proj = mat_create(1, c.dim);
+  state.ffn_a = mat_create(1, c.hidden_dim);
+  state.ffn_b = mat_create(1, c.hidden_dim);
+  state.ffn_out = mat_create(1, c.dim);
+  state.logits = mat_create(1, c.vocab_size);
 
   state.n_layers = c.n_layers;
   state.key_cache = malloc(c.n_layers * sizeof(Matrix));
@@ -163,6 +167,10 @@ void run_state_free(RunState *state) {
   mat_free(state->att);
   mat_free(state->att_out);
   mat_free(state->att_proj);
+  mat_free(state->ffn_a);
+  mat_free(state->ffn_b);
+  mat_free(state->ffn_out);
+  mat_free(state->logits);
   for (int l = 0; l < state->n_layers; l++) {
     mat_free(state->key_cache[l]);
     mat_free(state->value_cache[l]);
@@ -189,6 +197,11 @@ void rmsnorm(Matrix out, Matrix x, Matrix weight) {
 
   for (int i = 0; i < x.columns; i++)
     out.data[i] = x.data[i] / rms * weight.data[i];
+}
+
+void silu(Matrix m) {
+  for (int i = 0; i < mat_size(m); i++)
+    m.data[i] = m.data[i] / (1.0f + expf(-m.data[i]));
 }
 
 void rope(Matrix q, Matrix k, int pos, int head_size) {
@@ -252,4 +265,26 @@ void attention_block(Transformer *t, RunState *state, int layer, int pos) {
   ops_matvec(state->att_proj, t->wo[layer], state->att_out);
 
   mat_add(state->x, state->att_proj); // residual: x += attention result
+}
+
+void mlp_block(Transformer *t, RunState *state, int layer) {
+  rmsnorm(state->xnorm, state->x, t->rms_ffn[layer]);
+  ops_matvec(state->ffn_a, t->w1[layer], state->xnorm);
+  ops_matvec(state->ffn_b, t->w3[layer], state->xnorm);
+  silu(state->ffn_a);
+  for (int i = 0; i < mat_size(state->ffn_a); i++)
+    state->ffn_a.data[i] *= state->ffn_b.data[i]; // gate
+  ops_matvec(state->ffn_out, t->w2[layer], state->ffn_a);
+
+  mat_add(state->x, state->ffn_out); // residual: x += MLP result
+}
+
+void forward(Transformer *t, RunState *state, int token, int pos) {
+  embed(t, state, token);
+  for (int l = 0; l < t->config.n_layers; l++) {
+    attention_block(t, state, l, pos);
+    mlp_block(t, state, l);
+  }
+  rmsnorm(state->xnorm, state->x, t->rms_final);
+  ops_matvec(state->logits, t->wcls, state->xnorm);
 }
