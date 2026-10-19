@@ -3,36 +3,21 @@
 
 Not Python at all. Well…
 
-This is an ML-from-scratch-in-C playground focused on what high-level libraries don’t make you think about: manual memory management, performance-oriented kernels, and GPU compute.
+ML from scratch in C: kernels, memory and a Llama-style LLM, with benchmarks and experiments
+along the way. Python bindings eventually, because after writing everything in C, it would be
+a shame not to call it from Python anyway.
 
-The long-term goal is to ship it as a small Python-friendly mini-framework, because after writing everything in C, it would be a shame not to call it from Python anyway.
+## Backends
+One dispatcher ([ops.h](include/ops.h)) switches the compute engine at runtime:
+- [naive](src/backends/ops_naive.c): plain single-threaded C loops (baseline)
+- [OpenMP](src/backends/ops_omp.c): multi-threaded CPU
+- [OpenBLAS](src/backends/ops_blas.c): optimized BLAS (`sgemm`, `sgemv`)
+- CUDA: planned
 
-## Quick Navigation
-- [Linear Regression](examples/markdowns/linear.md) - Classic BGD on Boston Housing dataset.
-- [Logistic Regression](examples/markdowns/logistic.md) - Binary classification with Sigmoid.
-- [Neural Layers (MLP)](examples/markdowns/mlp.md) - Deep learning building blocks and Manual Backpropagation.
-- [Data Helpers](examples/markdowns/helpers.md) - Normalization, Train/Test splitting, and Shuffling logic.
-
-## Supported backends
-The core logic uses a Dispatcher Pattern (ops.h), allowing the library to switch compute engines at runtime.
-
-- [Naive](src/backends/ops_naive.c): Standard single-threaded C loops (Baseline).
-- [OpenMP](src/backends/ops_omp.c): Multi-threaded CPU parallelization.
-- [BLAS](src/backends/ops_blas.c): Wrapper for OpenBLAS/MKL.
-- CUDA: GPU acceleration (Planned).
-
-
-To enable <b>BLAS</b> (Basic Linear Algebra Subprograms) run: 
-
-```bash
-sudo apt-get update
-sudo apt-get install libopenblas-dev
-```
-
-### Benchmarks
+## Results
 Intel i5-9600K (6 cores), `-O3 -march=native` (max optimizations + AVX2).
 
-#### Matrix multiplication (1024×1024, float32)
+### Matrix multiplication (1024×1024, float32)
 Best of 5 runs, `make bench`.
 
 | Backend | Before (i-j-k loops) | Now | GFLOP/s (now) |
@@ -45,7 +30,7 @@ Best of 5 runs, `make bench`.
 so every access lands on a new cache line. `i-k-j` computes `C[i][:] += A[i][k] * B[k][:]`,
 reading B and C row by row (sequential memory, auto-vectorized by the compiler).
 
-#### LLM inference: TinyStories 15M
+### LLM inference: TinyStories 15M
 `make run EX=examples/generate.c [ARGS=omp|blas]`
 
 | matvec | tokens/s | time split |
@@ -55,11 +40,32 @@ reading B and C row by row (sequential memory, auto-vectorized by the compiler).
 | OpenBLAS, 6 threads | 259 | matvec 85%, attention 6%, other 9% |
 | OpenBLAS, 1 thread (`OPENBLAS_NUM_THREADS=1`) | 314 | matvec 86%, attention 7%, other 8% |
 
-### Build and run
+## Quickstart
 ```bash
-make run EX=examples/test_mlp.c   # build & run an example (downloads datasets)
-make bench                        # matmul benchmark
-make model && make test           # download the model, run all tests
-make MODE=debug run EX=...        # -O0 -g + AddressSanitizer
-make BLAS=0 ...                   # build without OpenBLAS
+sudo apt-get install libopenblas-dev
+make model                                  # TinyStories 15M + tokenizer
+make run EX=examples/generate.c ARGS=blas   # generate a story, print tokens/s
+make test                                   # tests (CI also runs debug+ASan and no-BLAS)
 ```
+
+More: `make bench` (matmul benchmark), `make MODE=debug ...` (AddressSanitizer/UBSan),
+`make BLAS=0 ...` (without OpenBLAS), `make` (all targets).
+
+## What's inside
+- **Transformer forward pass in C:** RMSNorm, RoPE, multi-head attention, SwiGLU MLP, KV cache.
+- **Zero-copy model loading:** weights are views into an `mmap`'ed file.
+- **Tested against independent references:** raw file bytes and a separate Python implementation.
+- **Classic ML:** linear and logistic regression, MLP with manual backprop ([docs/classic](docs/classic/)).
+
+How the pieces fit together: [docs/architecture.md](docs/architecture.md).
+
+## Layout
+```
+include/, src/      library: matrix, data, ops + backends, transformer, tokenizer
+examples/           runnable programs (generate.c, classic ML examples)
+tests/              one test per module, run in 3 build variants in CI
+docs/               architecture, classic ML write-ups
+```
+
+## License
+MIT
