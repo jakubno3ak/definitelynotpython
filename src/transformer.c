@@ -151,6 +151,7 @@ RunState run_state_create(Config c) {
 
   state.t_matvec = 0;
   state.t_attention = 0;
+  state.att_dump = NULL;
   state.n_layers = c.n_layers;
   state.key_cache = malloc(c.n_layers * sizeof(Matrix));
   state.value_cache = malloc(c.n_layers * sizeof(Matrix));
@@ -244,6 +245,8 @@ void attention(Transformer *t, RunState *state, int layer, int pos) {
       scores[p] = dot / sqrtf(head_size);
     }
     kernel_softmax_row(scores, pos + 1);
+    if (state->att_dump)
+      fwrite(scores, sizeof(float), pos + 1, state->att_dump);
 
     float *out_head = state->att_out.data + h * head_size;
     memset(out_head, 0, head_size * sizeof(float));

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Usage: generate [naive|omp|blas]
+// Usage: generate [naive|omp|blas] [attention_dump.bin]
 int main(int argc, char **argv) {
   if (argc > 1 && strcmp(argv[1], "omp") == 0)
     ops_set_backend(BACKEND_OMP);
@@ -16,11 +16,20 @@ int main(int argc, char **argv) {
   Tokenizer tok;
   tokenizer_load(&tok, "models/tokenizer.bin", t.config.vocab_size);
   RunState state = run_state_create(t.config);
+  if (argc > 2) {
+    state.att_dump = fopen(argv[2], "wb");
+    if (!state.att_dump) {
+      perror(argv[2]);
+      return 1;
+    }
+  }
 
   int token = 1; // BOS
   int generated = 0;
   double start = omp_get_wtime();
   for (int pos = 0; pos < t.config.seq_len; pos++) {
+    if (state.att_dump)
+      fwrite(&token, sizeof(int), 1, state.att_dump);
     forward(&t, &state, token, pos);
     int next = argmax(state.logits);
     if (next == 1 || next == 2) // BOS separates stories in TinyStories, EOS ends text
@@ -41,6 +50,8 @@ int main(int argc, char **argv) {
           state.t_matvec, 100 * state.t_matvec / seconds, state.t_attention,
           100 * state.t_attention / seconds, other, 100 * other / seconds);
 
+  if (state.att_dump)
+    fclose(state.att_dump);
   run_state_free(&state);
   tokenizer_free(&tok);
   free_transformer(&t);

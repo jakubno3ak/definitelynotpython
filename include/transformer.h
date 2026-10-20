@@ -4,6 +4,7 @@
 #include "matrix.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 typedef struct {
   int dim;        // length of each token's vector (288)
@@ -51,6 +52,7 @@ typedef struct {
   Matrix logits;       // 1 x vocab_size: one score per token in the vocabulary
   double t_matvec;     // seconds spent in matvec (sum over all calls)
   double t_attention;  // seconds spent in attention (sum over all calls)
+  FILE *att_dump;      // NULL = off; softmax rows: pos -> layer -> head -> pos+1 floats
   int n_layers;
 } RunState;
 
