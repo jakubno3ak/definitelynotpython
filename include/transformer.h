@@ -52,7 +52,7 @@ typedef struct {
   Matrix logits;       // 1 x vocab_size: one score per token in the vocabulary
   double t_matvec;     // seconds spent in matvec (sum over all calls)
   double t_attention;  // seconds spent in attention (sum over all calls)
-  FILE *att_dump;      // NULL = off; softmax rows: pos -> layer -> head -> pos+1 floats
+  FILE *att_dump;      // NULL = off; per pos: token id, then layer -> head -> pos+1 floats
   int n_layers;
 } RunState;
 
@@ -71,6 +71,7 @@ void attention(Transformer *t, RunState *state, int layer, int pos);
 void attention_block(Transformer *t, RunState *state, int layer, int pos);
 void mlp_block(Transformer *t, RunState *state, int layer);
 void forward(Transformer *t, RunState *state, int token, int pos);
+void prefill(Transformer *t, RunState *state, int *tokens, int n);
 int argmax(Matrix logits);
 
 #endif

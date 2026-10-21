@@ -294,6 +294,8 @@ void mlp_block(Transformer *t, RunState *state, int layer) {
 }
 
 void forward(Transformer *t, RunState *state, int token, int pos) {
+  if (state->att_dump)
+    fwrite(&token, sizeof(int), 1, state->att_dump);
   embed(t, state, token);
   for (int l = 0; l < t->config.n_layers; l++) {
     attention_block(t, state, l, pos);
@@ -301,6 +303,11 @@ void forward(Transformer *t, RunState *state, int token, int pos) {
   }
   rmsnorm(state->xnorm, state->x, t->rms_final);
   timed_matvec(state, state->logits, t->wcls, state->xnorm);
+}
+
+void prefill(Transformer *t, RunState *state, int *tokens, int n) {
+  for (int pos = 0; pos < n; pos++)
+    forward(t, state, tokens[pos], pos);
 }
 
 int argmax(Matrix logits) {
