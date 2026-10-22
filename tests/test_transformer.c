@@ -57,8 +57,9 @@ int main(void) {
   CHECK_NEAR(t.rms_final.data[0], 7.6768489f, 1e-6f);
   CHECK(t.wcls.data == t.token_embedding.data);
 
+  int bos = 1, once = 9038;
   RunState state = run_state_create(c);
-  embed(&t, &state, 1); // BOS
+  embed(&t, &state, &bos, 1);
 
   CHECK(state.x.rows == 1 && state.x.columns == 288);
   CHECK(state.x.owns_data);
@@ -108,9 +109,9 @@ int main(void) {
 
   // Two tokens [BOS, " Once"], layer 0, with RoPE: matches the real model
   RunState s2 = run_state_create(c);
-  embed(&t, &s2, 1);
+  embed(&t, &s2, &bos, 1);
   attention_block(&t, &s2, 0, 0); // BOS at position 0: leaves its k, v in the cache
-  embed(&t, &s2, 9038);
+  embed(&t, &s2, &once, 1);
   attention_block(&t, &s2, 0, 1);               // " Once" at position 1: looks at BOS and itself
   CHECK_NEAR(s2.att.data[0], 0.682737f, 1e-5f); // head 0: 68.3% on BOS
   CHECK_NEAR(s2.att.data[1 * 256], 0.998380f, 1e-5f); // head 1: 99.8% on BOS
@@ -122,7 +123,7 @@ int main(void) {
 
   // Full attention block for BOS: x = embedding + wo · attention
   RunState s3 = run_state_create(c);
-  embed(&t, &s3, 1);
+  embed(&t, &s3, &bos, 1);
   attention_block(&t, &s3, 0, 0);
   CHECK_NEAR(s3.x.data[0], 0.021281f, 1e-5f);
   CHECK_NEAR(s3.x.data[1], -0.019908f, 1e-5f);
@@ -131,7 +132,7 @@ int main(void) {
 
   // Whole block 0 for BOS: attention + MLP
   RunState s4 = run_state_create(c);
-  embed(&t, &s4, 1);
+  embed(&t, &s4, &bos, 1);
   attention_block(&t, &s4, 0, 0);
   mlp_block(&t, &s4, 0);
   CHECK_NEAR(s4.x.data[0], 0.038987f, 1e-5f);
@@ -141,7 +142,7 @@ int main(void) {
 
   // Whole model for BOS: the most likely next token is " Once" (id 9038)
   RunState s5 = run_state_create(c);
-  forward(&t, &s5, 1, 0);
+  forward(&t, &s5, &bos, 1, 0);
   CHECK_NEAR(s5.logits.data[0], -6.7908f, 1e-3f);
   CHECK_NEAR(s5.logits.data[1], 0.8281f, 1e-3f);
   CHECK_NEAR(s5.logits.data[9038], 12.29f, 1e-2f);
@@ -158,7 +159,7 @@ int main(void) {
   RunState s6 = run_state_create(c);
   int token = 1;
   for (int pos = 0; pos < 12; pos++) {
-    forward(&t, &s6, token, pos);
+    forward(&t, &s6, &token, 1, pos);
     token = argmax(s6.logits);
     CHECK(token == expected[pos]);
   }

@@ -63,7 +63,7 @@ void load_transformer(Transformer *t, const char *path);
 void free_transformer(Transformer *t);
 RunState run_state_create(Config c);
 void run_state_free(RunState *state);
-void embed(Transformer *t, RunState *state, int token);
+void embed(Transformer *t, RunState *state, int *tokens, int n);
 void rmsnorm(Matrix out, Matrix x, Matrix weight);
 void silu(Matrix m);
 void rope(Matrix q, Matrix k, int pos, int head_size);
@@ -71,7 +71,7 @@ void kv_store(RunState *state, int layer, int pos);
 void attention(Transformer *t, RunState *state, int layer, int pos);
 void attention_block(Transformer *t, RunState *state, int layer, int pos);
 void mlp_block(Transformer *t, RunState *state, int layer);
-void forward(Transformer *t, RunState *state, int token, int pos);
+void forward(Transformer *t, RunState *state, int *tokens, int n, int pos0);
 void prefill(Transformer *t, RunState *state, int *tokens, int n);
 int argmax(Matrix logits);
 

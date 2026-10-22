@@ -31,7 +31,7 @@ static int decode(Transformer *t, RunState *state, Tokenizer *tok, int token, in
     if (pos == t->config.seq_len) // KV cache full
       break;
     token = next;
-    forward(t, state, token, pos);
+    forward(t, state, &token, 1, pos);
     (*n_decode)++;
     pos++;
   }

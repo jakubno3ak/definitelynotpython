@@ -189,14 +189,16 @@ void run_state_free(RunState *state) {
   free(state->value_cache);
 }
 
-void embed(Transformer *t, RunState *state, int token) {
-  if (token < 0 || token >= t->config.vocab_size) {
-    fprintf(stderr, "Error: token %d outside vocabulary (0..%d)\n", token,
-            t->config.vocab_size - 1);
-    exit(1);
+void embed(Transformer *t, RunState *state, int *tokens, int n) {
+  for (int i = 0; i < n; i++) {
+    if (tokens[i] < 0 || tokens[i] >= t->config.vocab_size) {
+      fprintf(stderr, "Error: token %d outside vocabulary (0..%d)\n", tokens[i],
+              t->config.vocab_size - 1);
+      exit(1);
+    }
+    float *row = t->token_embedding.data + tokens[i] * t->config.dim;
+    memcpy(state->x.data + i * t->config.dim, row, t->config.dim * sizeof(float));
   }
-  float *row = t->token_embedding.data + token * t->config.dim;
-  memcpy(state->x.data, row, t->config.dim * sizeof(float));
 }
 
 void rmsnorm(Matrix out, Matrix x, Matrix weight) {
@@ -299,12 +301,31 @@ void mlp_block(Transformer *t, RunState *state, int layer) {
   mat_add(state->x, state->ffn_out); // residual: x += MLP result
 }
 
-void forward(Transformer *t, RunState *state, int token, int pos) {
+static void set_rows(RunState *state, int n) {
+  state->x.rows = n;
+  state->xnorm.rows = n;
+  state->q.rows = n;
+  state->k.rows = n;
+  state->v.rows = n;
+  state->att_out.rows = n;
+  state->att_proj.rows = n;
+  state->ffn_a.rows = n;
+  state->ffn_b.rows = n;
+  state->ffn_out.rows = n;
+}
+
+void forward(Transformer *t, RunState *state, int *tokens, int n, int pos0) {
+  if (pos0 + n > t->config.seq_len) {
+    fprintf(stderr, "Error: positions %d..%d exceed seq_len %d\n", pos0, pos0 + n - 1,
+            t->config.seq_len);
+    exit(1);
+  }
   if (state->att_dump)
-    fwrite(&token, sizeof(int), 1, state->att_dump);
-  embed(t, state, token);
+    fwrite(tokens, sizeof(int), n, state->att_dump);
+  set_rows(state, n);
+  embed(t, state, tokens, n);
   for (int l = 0; l < t->config.n_layers; l++) {
-    attention_block(t, state, l, pos);
+    attention_block(t, state, l, pos0);
     mlp_block(t, state, l);
   }
   rmsnorm(state->xnorm, state->x, t->rms_final);
@@ -313,7 +334,7 @@ void forward(Transformer *t, RunState *state, int token, int pos) {
 
 void prefill(Transformer *t, RunState *state, int *tokens, int n) {
   for (int pos = 0; pos < n; pos++)
-    forward(t, state, tokens[pos], pos);
+    forward(t, state, &tokens[pos], 1, pos);
 }
 
 int argmax(Matrix logits) {
