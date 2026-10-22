@@ -95,6 +95,16 @@ int main(void) {
     ops_linear(got_t, T, X);
     check_close(ref_t, got_t);
   }
+
+  // linear on 1 token (decode path, BLAS uses sgemv) == matvec, in every backend
+  Matrix one = mat_view(T.data, 1, 48), got_one = mat_view(got_t.data, 1, 64);
+  ops_set_backend(BACKEND_NAIVE);
+  ops_matvec(ref_v, X, one);
+  for (int k = 0; k < 3; k++) {
+    ops_set_backend(backends[k]);
+    ops_linear(got_one, one, X);
+    check_close(ref_v, got_one);
+  }
   mat_free(Xl);
   mat_free(Wl);
   mat_free(Yl);

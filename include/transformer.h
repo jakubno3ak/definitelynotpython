@@ -35,22 +35,23 @@ typedef struct {
   size_t file_size;
 } Transformer;
 
+// "rows" buffers: room for seq_len rows, .rows = tokens in the current forward (one per row)
 typedef struct {
-  Matrix x;            // 1 x dim, the current token's vector
-  Matrix xnorm;        // 1 x dim, x after RMSNorm
-  Matrix q;            // 1 x dim, attention query
-  Matrix k;            // 1 x dim, attention key
-  Matrix v;            // 1 x dim, attention value
+  Matrix x;            // rows x dim, each token's vector
+  Matrix xnorm;        // rows x dim, x after RMSNorm
+  Matrix q;            // rows x dim, attention query
+  Matrix k;            // rows x dim, attention key
+  Matrix v;            // rows x dim, attention value
   Matrix *key_cache;   // n_layers, each seq_len x dim: k of every position so far
   Matrix *value_cache; // n_layers, each seq_len x dim: v of every position so far
   Matrix att;          // n_heads x seq_len: attention scores, one row per head
-  Matrix att_out;      // 1 x dim: attention output, heads side by side
-  Matrix att_proj;     // 1 x dim: wo · att_out
-  Matrix ffn_a;        // 1 x hidden_dim: w1 · xnorm, then SiLU, then * ffn_b
-  Matrix ffn_b;        // 1 x hidden_dim: w3 · xnorm (the gate)
-  Matrix ffn_out;      // 1 x dim: w2 · ffn_a
+  Matrix att_out;      // rows x dim: attention output, heads side by side
+  Matrix att_proj;     // rows x dim: wo · att_out
+  Matrix ffn_a;        // rows x hidden_dim: w1 · xnorm, then SiLU, then * ffn_b
+  Matrix ffn_b;        // rows x hidden_dim: w3 · xnorm (the gate)
+  Matrix ffn_out;      // rows x dim: w2 · ffn_a
   Matrix logits;       // 1 x vocab_size: one score per token in the vocabulary
-  double t_matvec;     // seconds spent in matvec (sum over all calls)
+  double t_linear;     // seconds spent in ops_linear (sum over all calls)
   double t_attention;  // seconds spent in attention (sum over all calls)
   FILE *att_dump;      // NULL = off; per pos: token id, then layer -> head -> pos+1 floats
   int n_layers;

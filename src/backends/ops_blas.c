@@ -32,7 +32,11 @@ void matvec_blas(Matrix out, Matrix W, Matrix x) {
 }
 
 void linear_blas(Matrix out, Matrix X, Matrix W) {
-  cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, X.rows, W.rows, X.columns, 1.0f, X.data,
-              X.columns, W.data, W.columns, 0.0f, out.data, out.columns);
+  if (X.rows == 1) // decode: sgemv beats sgemm for a single token
+    cblas_sgemv(CblasRowMajor, CblasNoTrans, W.rows, W.columns, 1.0f, W.data, W.columns, X.data, 1,
+                0.0f, out.data, 1);
+  else
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, X.rows, W.rows, X.columns, 1.0f, X.data,
+                X.columns, W.data, W.columns, 0.0f, out.data, out.columns);
 }
 #endif

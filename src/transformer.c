@@ -133,23 +133,29 @@ void free_transformer(Transformer *t) {
   munmap(t->data, t->file_size);
 }
 
+static Matrix batch_buffer(int capacity, int columns) {
+  Matrix m = mat_create(capacity, columns);
+  m.rows = 1; // rows in use: one token until forward says more
+  return m;
+}
+
 RunState run_state_create(Config c) {
   RunState state;
-  state.x = mat_create(1, c.dim);
-  state.xnorm = mat_create(1, c.dim);
-  state.q = mat_create(1, c.dim);
-  state.k = mat_create(1, c.dim);
-  state.v = mat_create(1, c.dim);
+  state.x = batch_buffer(c.seq_len, c.dim);
+  state.xnorm = batch_buffer(c.seq_len, c.dim);
+  state.q = batch_buffer(c.seq_len, c.dim);
+  state.k = batch_buffer(c.seq_len, c.dim);
+  state.v = batch_buffer(c.seq_len, c.dim);
 
   state.att = mat_create(c.n_heads, c.seq_len);
-  state.att_out = mat_create(1, c.dim);
-  state.att_proj = mat_create(1, c.dim);
-  state.ffn_a = mat_create(1, c.hidden_dim);
-  state.ffn_b = mat_create(1, c.hidden_dim);
-  state.ffn_out = mat_create(1, c.dim);
+  state.att_out = batch_buffer(c.seq_len, c.dim);
+  state.att_proj = batch_buffer(c.seq_len, c.dim);
+  state.ffn_a = batch_buffer(c.seq_len, c.hidden_dim);
+  state.ffn_b = batch_buffer(c.seq_len, c.hidden_dim);
+  state.ffn_out = batch_buffer(c.seq_len, c.dim);
   state.logits = mat_create(1, c.vocab_size);
 
-  state.t_matvec = 0;
+  state.t_linear = 0;
   state.t_attention = 0;
   state.att_dump = NULL;
   state.n_layers = c.n_layers;
@@ -258,37 +264,37 @@ void attention(Transformer *t, RunState *state, int layer, int pos) {
   }
 }
 
-static void timed_matvec(RunState *state, Matrix out, Matrix W, Matrix x) {
+static void timed_linear(RunState *state, Matrix out, Matrix W, Matrix X) {
   double start = omp_get_wtime();
-  ops_matvec(out, W, x);
-  state->t_matvec += omp_get_wtime() - start;
+  ops_linear(out, X, W);
+  state->t_linear += omp_get_wtime() - start;
 }
 
 void attention_block(Transformer *t, RunState *state, int layer, int pos) {
   int head_size = t->config.dim / t->config.n_heads;
 
   rmsnorm(state->xnorm, state->x, t->rms_att[layer]);
-  timed_matvec(state, state->q, t->wq[layer], state->xnorm);
-  timed_matvec(state, state->k, t->wk[layer], state->xnorm);
-  timed_matvec(state, state->v, t->wv[layer], state->xnorm);
+  timed_linear(state, state->q, t->wq[layer], state->xnorm);
+  timed_linear(state, state->k, t->wk[layer], state->xnorm);
+  timed_linear(state, state->v, t->wv[layer], state->xnorm);
   rope(state->q, state->k, pos, head_size);
   kv_store(state, layer, pos);
   double start = omp_get_wtime();
   attention(t, state, layer, pos);
   state->t_attention += omp_get_wtime() - start;
-  timed_matvec(state, state->att_proj, t->wo[layer], state->att_out);
+  timed_linear(state, state->att_proj, t->wo[layer], state->att_out);
 
   mat_add(state->x, state->att_proj); // residual: x += attention result
 }
 
 void mlp_block(Transformer *t, RunState *state, int layer) {
   rmsnorm(state->xnorm, state->x, t->rms_ffn[layer]);
-  timed_matvec(state, state->ffn_a, t->w1[layer], state->xnorm);
-  timed_matvec(state, state->ffn_b, t->w3[layer], state->xnorm);
+  timed_linear(state, state->ffn_a, t->w1[layer], state->xnorm);
+  timed_linear(state, state->ffn_b, t->w3[layer], state->xnorm);
   silu(state->ffn_a);
   for (int i = 0; i < mat_size(state->ffn_a); i++)
     state->ffn_a.data[i] *= state->ffn_b.data[i]; // gate
-  timed_matvec(state, state->ffn_out, t->w2[layer], state->ffn_a);
+  timed_linear(state, state->ffn_out, t->w2[layer], state->ffn_a);
 
   mat_add(state->x, state->ffn_out); // residual: x += MLP result
 }
@@ -302,7 +308,7 @@ void forward(Transformer *t, RunState *state, int token, int pos) {
     mlp_block(t, state, l);
   }
   rmsnorm(state->xnorm, state->x, t->rms_final);
-  timed_matvec(state, state->logits, t->wcls, state->xnorm);
+  timed_linear(state, state->logits, t->wcls, state->xnorm);
 }
 
 void prefill(Transformer *t, RunState *state, int *tokens, int n) {

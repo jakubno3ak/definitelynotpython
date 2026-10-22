@@ -46,9 +46,9 @@ static void print_stats(Transformer *t, RunState *state, int n_prompt, int n_dec
   double gb_s = tok_s * t->file_size / 1e9; // all weights are read once per token
   fprintf(stderr, "--- %s: %d tokens in %.2f s: %.1f tokens/s, %.1f GB/s of weights ---\n",
           ops_get_backend_name(), generated, seconds, tok_s, gb_s);
-  double other = seconds - state->t_matvec - state->t_attention;
-  fprintf(stderr, "    matvec %.2f s (%.0f%%), attention %.2f s (%.0f%%), other %.2f s (%.0f%%)\n",
-          state->t_matvec, 100 * state->t_matvec / seconds, state->t_attention,
+  double other = seconds - state->t_linear - state->t_attention;
+  fprintf(stderr, "    linear %.2f s (%.0f%%), attention %.2f s (%.0f%%), other %.2f s (%.0f%%)\n",
+          state->t_linear, 100 * state->t_linear / seconds, state->t_attention,
           100 * state->t_attention / seconds, other, 100 * other / seconds);
   fprintf(stderr,
           "    prefill: %3d tokens in %6.1f ms (%.2f ms/token, %.1f tokens/s)  TTFT %.1f ms\n",
