@@ -202,13 +202,17 @@ void embed(Transformer *t, RunState *state, int *tokens, int n) {
 }
 
 void rmsnorm(Matrix out, Matrix x, Matrix weight) {
-  float sum_sq = 0.0f;
-  for (int i = 0; i < x.columns; i++)
-    sum_sq += x.data[i] * x.data[i];
-  float rms = sqrtf(sum_sq / x.columns + 1e-5f);
+  for (int r = 0; r < x.rows; r++) {
+    float *xr = x.data + r * x.columns;
+    float *outr = out.data + r * out.columns;
+    float sum_sq = 0.0f;
+    for (int i = 0; i < x.columns; i++)
+      sum_sq += xr[i] * xr[i];
+    float rms = sqrtf(sum_sq / x.columns + 1e-5f);
 
-  for (int i = 0; i < x.columns; i++)
-    out.data[i] = x.data[i] / rms * weight.data[i];
+    for (int i = 0; i < x.columns; i++)
+      outr[i] = xr[i] / rms * weight.data[i];
+  }
 }
 
 void silu(Matrix m) {
