@@ -12,6 +12,8 @@ Matrix mat_mul_blas(Matrix A, Matrix B) {
 void matvec_blas(Matrix out, Matrix W, Matrix x) {
   matvec_naive(out, W, x); // silent: called ~43 times per token
 }
+
+void linear_blas(Matrix out, Matrix X, Matrix W) { linear_naive(out, X, W); }
 #else
 #include <cblas.h>
 
@@ -27,5 +29,10 @@ Matrix mat_mul_blas(Matrix A, Matrix B) {
 void matvec_blas(Matrix out, Matrix W, Matrix x) {
   cblas_sgemv(CblasRowMajor, CblasNoTrans, W.rows, W.columns, 1.0f, W.data, W.columns, x.data, 1,
               0.0f, out.data, 1);
+}
+
+void linear_blas(Matrix out, Matrix X, Matrix W) {
+  cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, X.rows, W.rows, X.columns, 1.0f, X.data,
+              X.columns, W.data, W.columns, 0.0f, out.data, out.columns);
 }
 #endif

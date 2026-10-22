@@ -37,6 +37,17 @@ void matvec_omp(Matrix out, Matrix W, Matrix x) {
   }
 }
 
+void linear_omp(Matrix out, Matrix X, Matrix W) {
+#pragma omp parallel for collapse(2)
+  for (int t = 0; t < X.rows; t++)
+    for (int o = 0; o < W.rows; o++) {
+      float sum = 0.0f;
+      for (int i = 0; i < W.columns; i++)
+        sum += X.data[t * X.columns + i] * W.data[o * W.columns + i];
+      out.data[t * out.columns + o] = sum;
+    }
+}
+
 void relu_omp(Matrix *m) { APPLY_KERNEL_OMP(m, KERNEL_RELU); }
 
 void relu_prime_omp(Matrix *m) { APPLY_KERNEL_OMP(m, KERNEL_RELU_PRIME); }

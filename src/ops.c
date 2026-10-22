@@ -62,6 +62,24 @@ void ops_matvec(Matrix out, Matrix W, Matrix x) {
   }
 }
 
+void ops_linear(Matrix out, Matrix X, Matrix W) {
+  if (X.columns != W.columns || out.rows != X.rows || out.columns != W.rows) {
+    fprintf(stderr, "Shape mismatch in linear: X (%dx%d), W (%dx%d), out (%dx%d)\n", X.rows,
+            X.columns, W.rows, W.columns, out.rows, out.columns);
+    exit(1);
+  }
+  switch (CURRENT_BACKEND) {
+  case BACKEND_OMP:
+    linear_omp(out, X, W);
+    break;
+  case BACKEND_BLAS:
+    linear_blas(out, X, W);
+    break;
+  default: // CUDA linear not implemented yet
+    linear_naive(out, X, W);
+  }
+}
+
 void ops_add_bias(Matrix *m, Matrix *bias) {
   if (CURRENT_BACKEND == BACKEND_NAIVE) {
     add_bias_naive(m, bias);

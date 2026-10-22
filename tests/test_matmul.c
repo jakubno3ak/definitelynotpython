@@ -65,6 +65,42 @@ int main(void) {
     ops_matvec(got_v, X, v);
     check_close(ref_v, got_v);
   }
+
+  // linear (X · Wᵀ): 2 tokens x 3 neurons by hand, in every backend
+  Matrix Xl = mat_create(2, 4), Wl = mat_create(3, 4), Yl = mat_create(2, 3);
+  float xl[] = {1, 0, 2, 1, 0, 1, 1, 0}, wl[] = {1, 2, 3, 0, 0, 1, 0, 1, 2, 0, 1, 1};
+  float yl[] = {7, 1, 5, 5, 1, 1};
+  for (int i = 0; i < 8; i++)
+    Xl.data[i] = xl[i];
+  for (int i = 0; i < 12; i++)
+    Wl.data[i] = wl[i];
+  for (int k = 0; k < 3; k++) {
+    ops_set_backend(backends[k]);
+    ops_linear(Yl, Xl, Wl);
+    for (int i = 0; i < 6; i++)
+      CHECK(Yl.data[i] == yl[i]);
+  }
+
+  // linear on 5 random tokens: naive row t == matvec of token t, OpenMP and BLAS == naive
+  Matrix T = mat_create(5, 48), ref_t = mat_create(5, 64), got_t = mat_create(5, 64);
+  mat_fill_random(T);
+  ops_set_backend(BACKEND_NAIVE);
+  ops_linear(ref_t, T, X);
+  for (int t = 0; t < 5; t++) {
+    ops_matvec(ref_v, X, mat_view(T.data + t * 48, 1, 48));
+    check_close(ref_v, mat_view(ref_t.data + t * 64, 1, 64));
+  }
+  for (int k = 1; k < 3; k++) {
+    ops_set_backend(backends[k]);
+    ops_linear(got_t, T, X);
+    check_close(ref_t, got_t);
+  }
+  mat_free(Xl);
+  mat_free(Wl);
+  mat_free(Yl);
+  mat_free(T);
+  mat_free(ref_t);
+  mat_free(got_t);
   ops_set_backend(BACKEND_NAIVE);
   mat_free(v);
   mat_free(ref_v);

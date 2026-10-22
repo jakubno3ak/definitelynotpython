@@ -25,6 +25,12 @@ void matvec_omp(Matrix out, Matrix W, Matrix x);
 void matvec_blas(Matrix out, Matrix W, Matrix x);
 void ops_matvec(Matrix out, Matrix W, Matrix x);
 
+// out = X · Wᵀ: each row of X (token) times each row of W (neuron), W is (out x in)
+void linear_naive(Matrix out, Matrix X, Matrix W);
+void linear_omp(Matrix out, Matrix X, Matrix W);
+void linear_blas(Matrix out, Matrix X, Matrix W);
+void ops_linear(Matrix out, Matrix X, Matrix W);
+
 // add bias
 void add_bias_naive(Matrix *m, Matrix *bias);
 void add_bias_omp(Matrix *m, Matrix *bias);
