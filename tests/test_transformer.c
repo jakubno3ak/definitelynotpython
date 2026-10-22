@@ -32,10 +32,34 @@ static void test_silu(void) {
   mat_free(z);
 }
 
+// Two identical rows rotated from pos0 = 3: row 0 = rope alone at 3, row 1 = rope alone at 4
+static void test_rope_rows(void) {
+  float v[] = {1, 2, 3, 4};
+  Matrix q2 = mat_create(2, 4), k2 = mat_create(2, 4), q1 = mat_create(1, 4), k1 = mat_create(1, 4);
+  for (int i = 0; i < 8; i++)
+    q2.data[i] = k2.data[i] = v[i % 4];
+  rope(q2, k2, 3, 4);
+  for (int pos = 3; pos <= 4; pos++) {
+    for (int i = 0; i < 4; i++)
+      q1.data[i] = k1.data[i] = v[i];
+    rope(q1, k1, pos, 4);
+    for (int i = 0; i < 4; i++) {
+      CHECK(q2.data[(pos - 3) * 4 + i] == q1.data[i]);
+      CHECK(k2.data[(pos - 3) * 4 + i] == k1.data[i]);
+    }
+  }
+  CHECK(q2.data[0] != q2.data[4]); // different positions really got different angles
+  mat_free(q2);
+  mat_free(k2);
+  mat_free(q1);
+  mat_free(k1);
+}
+
 // Expected values were read straight from the file with `od` (see notes).
 int main(void) {
   test_rmsnorm_formula();
   test_silu();
+  test_rope_rows();
 
   Transformer t;
   load_transformer(&t, "models/stories15M.bin"); // exits on end-of-file mismatch
@@ -93,6 +117,22 @@ int main(void) {
   CHECK(state.key_cache[0].data[0] == state.k.data[0]);
   CHECK(state.value_cache[0].data[287] == state.v.data[287]);
   CHECK(state.key_cache[0].data[288] == 0.0f); // position 1 still empty
+
+  // kv_store of 2 rows from pos0 = 3: cache rows 3, 4 = k, v rows 0, 1; rows 2 and 5 untouched
+  RunState skv = run_state_create(c);
+  skv.k.rows = skv.v.rows = 2;
+  for (int i = 0; i < 2 * 288; i++) {
+    skv.k.data[i] = i + 1;
+    skv.v.data[i] = -(i + 1);
+  }
+  kv_store(&skv, 0, 3);
+  for (int i = 0; i < 2 * 288; i++) {
+    CHECK(skv.key_cache[0].data[3 * 288 + i] == skv.k.data[i]);
+    CHECK(skv.value_cache[0].data[3 * 288 + i] == skv.v.data[i]);
+  }
+  CHECK(skv.key_cache[0].data[3 * 288 - 1] == 0.0f);
+  CHECK(skv.key_cache[0].data[5 * 288] == 0.0f);
+  run_state_free(&skv);
 
   attention(&t, &state, 0, 0);
   CHECK_NEAR(state.att.data[0], 1.0f, 1e-6f);       // head 0: 100% on itself

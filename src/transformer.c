@@ -220,27 +220,33 @@ void silu(Matrix m) {
     m.data[i] = m.data[i] / (1.0f + expf(-m.data[i]));
 }
 
-void rope(Matrix q, Matrix k, int pos, int head_size) {
-  for (int i = 0; i < q.columns; i += 2) {
-    int pair = (i % head_size) / 2;
-    float theta = 1.0f / powf(10000.0f, 2.0f * pair / head_size);
-    float angle = pos * theta;
-    float c = cosf(angle), s = sinf(angle);
+void rope(Matrix q, Matrix k, int pos0, int head_size) {
+  for (int r = 0; r < q.rows; r++) {
+    float *qr = q.data + r * q.columns;
+    float *kr = k.data + r * k.columns;
+    int pos = pos0 + r;
+    for (int i = 0; i < q.columns; i += 2) {
+      int pair = (i % head_size) / 2;
+      float theta = 1.0f / powf(10000.0f, 2.0f * pair / head_size);
+      float angle = pos * theta;
+      float c = cosf(angle), s = sinf(angle);
 
-    float q0 = q.data[i], q1 = q.data[i + 1];
-    q.data[i] = q0 * c - q1 * s;
-    q.data[i + 1] = q0 * s + q1 * c;
+      float q0 = qr[i], q1 = qr[i + 1];
+      qr[i] = q0 * c - q1 * s;
+      qr[i + 1] = q0 * s + q1 * c;
 
-    float k0 = k.data[i], k1 = k.data[i + 1];
-    k.data[i] = k0 * c - k1 * s;
-    k.data[i + 1] = k0 * s + k1 * c;
+      float k0 = kr[i], k1 = kr[i + 1];
+      kr[i] = k0 * c - k1 * s;
+      kr[i + 1] = k0 * s + k1 * c;
+    }
   }
 }
 
-void kv_store(RunState *state, int layer, int pos) {
+void kv_store(RunState *state, int layer, int pos0) {
   int dim = state->k.columns;
-  memcpy(state->key_cache[layer].data + pos * dim, state->k.data, dim * sizeof(float));
-  memcpy(state->value_cache[layer].data + pos * dim, state->v.data, dim * sizeof(float));
+  int bytes = state->k.rows * dim * sizeof(float); // all n rows at once
+  memcpy(state->key_cache[layer].data + pos0 * dim, state->k.data, bytes);
+  memcpy(state->value_cache[layer].data + pos0 * dim, state->v.data, bytes);
 }
 
 void attention(Transformer *t, RunState *state, int layer, int pos) {
