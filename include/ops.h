@@ -19,12 +19,6 @@ Matrix mat_mul_omp(Matrix A, Matrix B);
 Matrix mat_mul_blas(Matrix A, Matrix B);
 Matrix ops_mat_mul(Matrix A, Matrix B);
 
-// out = W · x, W is (out x in), writes into out (no allocation)
-void matvec_naive(Matrix out, Matrix W, Matrix x);
-void matvec_omp(Matrix out, Matrix W, Matrix x);
-void matvec_blas(Matrix out, Matrix W, Matrix x);
-void ops_matvec(Matrix out, Matrix W, Matrix x);
-
 // out = X · Wᵀ: each row of X (token) times each row of W (neuron), W is (out x in)
 void linear_naive(Matrix out, Matrix X, Matrix W);
 void linear_omp(Matrix out, Matrix X, Matrix W);

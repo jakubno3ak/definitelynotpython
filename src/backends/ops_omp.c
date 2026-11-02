@@ -27,16 +27,6 @@ Matrix mat_mul_omp(Matrix A, Matrix B) {
   return C;
 }
 
-void matvec_omp(Matrix out, Matrix W, Matrix x) {
-#pragma omp parallel for
-  for (int i = 0; i < W.rows; i++) {
-    float sum = 0.0f;
-    for (int j = 0; j < W.columns; j++)
-      sum += W.data[i * W.columns + j] * x.data[j];
-    out.data[i] = sum;
-  }
-}
-
 void linear_omp(Matrix out, Matrix X, Matrix W) {
 #pragma omp parallel for collapse(2)
   for (int t = 0; t < X.rows; t++)

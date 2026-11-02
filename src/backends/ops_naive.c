@@ -27,15 +27,6 @@ Matrix mat_mul_naive(Matrix A, Matrix B) {
   return C;
 }
 
-void matvec_naive(Matrix out, Matrix W, Matrix x) {
-  for (int i = 0; i < W.rows; i++) {
-    float sum = 0.0f;
-    for (int j = 0; j < W.columns; j++)
-      sum += W.data[i * W.columns + j] * x.data[j];
-    out.data[i] = sum;
-  }
-}
-
 void linear_naive(Matrix out, Matrix X, Matrix W) {
   for (int t = 0; t < X.rows; t++)
     for (int o = 0; o < W.rows; o++) {

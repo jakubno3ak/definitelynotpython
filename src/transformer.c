@@ -279,7 +279,7 @@ void attention(Transformer *t, RunState *state, int layer, int pos0) {
   }
 }
 
-static void timed_linear(RunState *state, Matrix out, Matrix W, Matrix X) {
+static void timed_linear(RunState *state, Matrix out, Matrix X, Matrix W) {
   double start = omp_get_wtime();
   ops_linear(out, X, W);
   state->t_linear += omp_get_wtime() - start;
@@ -289,27 +289,27 @@ void attention_block(Transformer *t, RunState *state, int layer, int pos0) {
   int head_size = t->config.dim / t->config.n_heads;
 
   rmsnorm(state->xnorm, state->x, t->rms_att[layer]);
-  timed_linear(state, state->q, t->wq[layer], state->xnorm);
-  timed_linear(state, state->k, t->wk[layer], state->xnorm);
-  timed_linear(state, state->v, t->wv[layer], state->xnorm);
+  timed_linear(state, state->q, state->xnorm, t->wq[layer]);
+  timed_linear(state, state->k, state->xnorm, t->wk[layer]);
+  timed_linear(state, state->v, state->xnorm, t->wv[layer]);
   rope(state->q, state->k, pos0, head_size);
   kv_store(state, layer, pos0);
   double start = omp_get_wtime();
   attention(t, state, layer, pos0);
   state->t_attention += omp_get_wtime() - start;
-  timed_linear(state, state->att_proj, t->wo[layer], state->att_out);
+  timed_linear(state, state->att_proj, state->att_out, t->wo[layer]);
 
   mat_add(state->x, state->att_proj); // residual: x += attention result
 }
 
 void mlp_block(Transformer *t, RunState *state, int layer) {
   rmsnorm(state->xnorm, state->x, t->rms_ffn[layer]);
-  timed_linear(state, state->ffn_a, t->w1[layer], state->xnorm);
-  timed_linear(state, state->ffn_b, t->w3[layer], state->xnorm);
+  timed_linear(state, state->ffn_a, state->xnorm, t->w1[layer]);
+  timed_linear(state, state->ffn_b, state->xnorm, t->w3[layer]);
   silu(state->ffn_a);
   for (int i = 0; i < mat_size(state->ffn_a); i++)
     state->ffn_a.data[i] *= state->ffn_b.data[i]; // gate
-  timed_linear(state, state->ffn_out, t->w2[layer], state->ffn_a);
+  timed_linear(state, state->ffn_out, state->ffn_a, t->w2[layer]);
 
   mat_add(state->x, state->ffn_out); // residual: x += MLP result
 }
@@ -342,7 +342,7 @@ void forward(Transformer *t, RunState *state, int *tokens, int n, int pos0) {
     mlp_block(t, state, l);
   }
   rmsnorm(state->xnorm, state->x, t->rms_final);
-  timed_linear(state, state->logits, t->wcls, state->xnorm);
+  timed_linear(state, state->logits, state->xnorm, t->wcls);
 }
 
 void prefill(Transformer *t, RunState *state, int *tokens, int n) {

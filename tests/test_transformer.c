@@ -98,17 +98,17 @@ int main(void) {
   CHECK_NEAR(state.xnorm.data[2], 0.252732f, 1e-5f);
   CHECK(state.x.data[0] == t.token_embedding.data[288]); // x itself is unchanged
 
-  ops_matvec(state.q, t.wq[0], state.xnorm);
+  ops_linear(state.q, state.xnorm, t.wq[0]);
   CHECK_NEAR(state.q.data[0], -0.432269f, 1e-5f);
   CHECK_NEAR(state.q.data[1], 0.146972f, 1e-5f);
   CHECK_NEAR(state.q.data[2], -0.345075f, 1e-5f);
 
-  ops_matvec(state.k, t.wk[0], state.xnorm);
+  ops_linear(state.k, state.xnorm, t.wk[0]);
   CHECK_NEAR(state.k.data[0], 0.009520f, 1e-5f);
   CHECK_NEAR(state.k.data[1], -0.021181f, 1e-5f);
   CHECK_NEAR(state.k.data[2], 0.046356f, 1e-5f);
 
-  ops_matvec(state.v, t.wv[0], state.xnorm);
+  ops_linear(state.v, state.xnorm, t.wv[0]);
   CHECK_NEAR(state.v.data[0], -0.013250f, 1e-5f);
   CHECK_NEAR(state.v.data[1], 0.038565f, 1e-5f);
   CHECK_NEAR(state.v.data[2], 0.030018f, 1e-5f);
@@ -140,7 +140,7 @@ int main(void) {
   for (int i = 0; i < 288; i++)
     CHECK(state.att_out.data[i] == state.v.data[i]); // one token: output = its own v
 
-  ops_matvec(state.att_proj, t.wo[0], state.att_out);
+  ops_linear(state.att_proj, state.att_out, t.wo[0]);
   CHECK_NEAR(state.att_proj.data[0], 0.038377f, 1e-5f);
   CHECK_NEAR(state.att_proj.data[1], -0.006377f, 1e-5f);
   CHECK_NEAR(state.att_proj.data[2], 0.012379f, 1e-5f);

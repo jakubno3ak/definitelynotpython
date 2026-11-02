@@ -44,24 +44,6 @@ Matrix ops_mat_mul(Matrix A, Matrix B) {
   }
 }
 
-void ops_matvec(Matrix out, Matrix W, Matrix x) {
-  if (W.columns != mat_size(x) || W.rows != mat_size(out)) {
-    fprintf(stderr, "Shape mismatch in matvec: W (%dx%d), x %d, out %d\n", W.rows, W.columns,
-            mat_size(x), mat_size(out));
-    exit(1);
-  }
-  switch (CURRENT_BACKEND) {
-  case BACKEND_OMP:
-    matvec_omp(out, W, x);
-    break;
-  case BACKEND_BLAS:
-    matvec_blas(out, W, x);
-    break;
-  default: // CUDA matvec not implemented yet
-    matvec_naive(out, W, x);
-  }
-}
-
 void ops_linear(Matrix out, Matrix X, Matrix W) {
   if (X.columns != W.columns || out.rows != X.rows || out.columns != W.rows) {
     fprintf(stderr, "Shape mismatch in linear: X (%dx%d), W (%dx%d), out (%dx%d)\n", X.rows,
