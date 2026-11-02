@@ -341,8 +341,11 @@ void forward(Transformer *t, RunState *state, int *tokens, int n, int pos0) {
     attention_block(t, state, l, pos0);
     mlp_block(t, state, l);
   }
-  rmsnorm(state->xnorm, state->x, t->rms_final);
-  timed_linear(state, state->logits, state->xnorm, t->wcls);
+  int dim = t->config.dim;
+  Matrix x_last = mat_view(state->x.data + (n - 1) * dim, 1, dim);
+  Matrix xnorm_last = mat_view(state->xnorm.data + (n - 1) * dim, 1, dim);
+  rmsnorm(xnorm_last, x_last, t->rms_final); // only the last token predicts what comes next
+  timed_linear(state, state->logits, xnorm_last, t->wcls);
 }
 
 void prefill(Transformer *t, RunState *state, int *tokens, int n) {
