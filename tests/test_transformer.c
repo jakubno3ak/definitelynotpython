@@ -161,6 +161,19 @@ int main(void) {
   CHECK_NEAR(s2.att_out.data[0], 0.014552f, 1e-5f);         // mix of v
   run_state_free(&s2);
 
+  // The same two tokens at once (n = 2): row 1 = " Once" above, row 0 = BOS alone (s3 below)
+  RunState sb = run_state_create(c);
+  int two[] = {1, 9038};
+  set_rows(&sb, 2);
+  embed(&t, &sb, two, 2);
+  attention_block(&t, &sb, 0, 0);
+  CHECK_NEAR(sb.att.data[0], 0.682737f, 1e-5f); // att holds the last row: " Once"
+  CHECK_NEAR(sb.att.data[1 * 256], 0.998380f, 1e-5f);
+  CHECK_NEAR(sb.att_out.data[288], 0.014552f, 1e-5f); // row 1 of att_out
+  CHECK_NEAR(sb.x.data[0], 0.021281f, 1e-5f);         // row 0: BOS must not see " Once"
+  CHECK_NEAR(sb.x.data[1], -0.019908f, 1e-5f);
+  run_state_free(&sb);
+
   // Full attention block for BOS: x = embedding + wo · attention
   RunState s3 = run_state_create(c);
   embed(&t, &s3, &bos, 1);

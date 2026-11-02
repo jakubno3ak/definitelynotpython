@@ -249,29 +249,32 @@ void kv_store(RunState *state, int layer, int pos0) {
   memcpy(state->value_cache[layer].data + pos0 * dim, state->v.data, bytes);
 }
 
-void attention(Transformer *t, RunState *state, int layer, int pos) {
+void attention(Transformer *t, RunState *state, int layer, int pos0) {
   int dim = t->config.dim;
   int head_size = dim / t->config.n_heads;
-  for (int h = 0; h < t->config.n_heads; h++) {
-    float *q_head = state->q.data + h * head_size;
-    float *scores = state->att.data + h * t->config.seq_len;
-    for (int p = 0; p <= pos; p++) {
-      float *k_head = state->key_cache[layer].data + p * dim + h * head_size;
-      float dot = 0.0f;
-      for (int i = 0; i < head_size; i++)
-        dot += q_head[i] * k_head[i];
-      scores[p] = dot / sqrtf(head_size);
-    }
-    kernel_softmax_row(scores, pos + 1);
-    if (state->att_dump)
-      fwrite(scores, sizeof(float), pos + 1, state->att_dump);
+  for (int r = 0; r < state->q.rows; r++) {
+    int pos = pos0 + r;
+    for (int h = 0; h < t->config.n_heads; h++) {
+      float *q_head = state->q.data + r * dim + h * head_size;
+      float *scores = state->att.data + h * t->config.seq_len;
+      for (int p = 0; p <= pos; p++) {
+        float *k_head = state->key_cache[layer].data + p * dim + h * head_size;
+        float dot = 0.0f;
+        for (int i = 0; i < head_size; i++)
+          dot += q_head[i] * k_head[i];
+        scores[p] = dot / sqrtf(head_size);
+      }
+      kernel_softmax_row(scores, pos + 1);
+      if (state->att_dump)
+        fwrite(scores, sizeof(float), pos + 1, state->att_dump);
 
-    float *out_head = state->att_out.data + h * head_size;
-    memset(out_head, 0, head_size * sizeof(float));
-    for (int p = 0; p <= pos; p++) {
-      float *v_head = state->value_cache[layer].data + p * dim + h * head_size;
-      for (int i = 0; i < head_size; i++)
-        out_head[i] += scores[p] * v_head[i];
+      float *out_head = state->att_out.data + r * dim + h * head_size;
+      memset(out_head, 0, head_size * sizeof(float));
+      for (int p = 0; p <= pos; p++) {
+        float *v_head = state->value_cache[layer].data + p * dim + h * head_size;
+        for (int i = 0; i < head_size; i++)
+          out_head[i] += scores[p] * v_head[i];
+      }
     }
   }
 }
@@ -282,17 +285,17 @@ static void timed_linear(RunState *state, Matrix out, Matrix W, Matrix X) {
   state->t_linear += omp_get_wtime() - start;
 }
 
-void attention_block(Transformer *t, RunState *state, int layer, int pos) {
+void attention_block(Transformer *t, RunState *state, int layer, int pos0) {
   int head_size = t->config.dim / t->config.n_heads;
 
   rmsnorm(state->xnorm, state->x, t->rms_att[layer]);
   timed_linear(state, state->q, t->wq[layer], state->xnorm);
   timed_linear(state, state->k, t->wk[layer], state->xnorm);
   timed_linear(state, state->v, t->wv[layer], state->xnorm);
-  rope(state->q, state->k, pos, head_size);
-  kv_store(state, layer, pos);
+  rope(state->q, state->k, pos0, head_size);
+  kv_store(state, layer, pos0);
   double start = omp_get_wtime();
-  attention(t, state, layer, pos);
+  attention(t, state, layer, pos0);
   state->t_attention += omp_get_wtime() - start;
   timed_linear(state, state->att_proj, t->wo[layer], state->att_out);
 
@@ -311,7 +314,7 @@ void mlp_block(Transformer *t, RunState *state, int layer) {
   mat_add(state->x, state->ffn_out); // residual: x += MLP result
 }
 
-static void set_rows(RunState *state, int n) {
+void set_rows(RunState *state, int n) {
   state->x.rows = n;
   state->xnorm.rows = n;
   state->q.rows = n;
