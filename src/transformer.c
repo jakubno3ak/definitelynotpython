@@ -349,8 +349,11 @@ void forward(Transformer *t, RunState *state, int *tokens, int n, int pos0) {
 }
 
 void prefill(Transformer *t, RunState *state, int *tokens, int n) {
-  for (int pos = 0; pos < n; pos++)
-    forward(t, state, &tokens[pos], 1, pos);
+  if (state->att_dump) // dump file is written position by position
+    for (int pos = 0; pos < n; pos++)
+      forward(t, state, &tokens[pos], 1, pos);
+  else
+    forward(t, state, tokens, n, 0);
 }
 
 int argmax(Matrix logits) {

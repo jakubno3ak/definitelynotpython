@@ -217,6 +217,22 @@ int main(void) {
     CHECK(token == expected[pos]);
   }
   run_state_free(&s6);
+
+  // Prefill at once == prefill one token at a time: same logits, same KV cache
+  int prompt[] = {1, 450, 8338, 265, 471}; // BOS " The" " drag" "on" " was"
+  RunState one = run_state_create(c), all = run_state_create(c);
+  for (int pos = 0; pos < 5; pos++)
+    forward(&t, &one, &prompt[pos], 1, pos);
+  prefill(&t, &all, prompt, 5);
+  for (int i = 0; i < c.vocab_size; i++)
+    CHECK(all.logits.data[i] == one.logits.data[i]);
+  for (int l = 0; l < c.n_layers; l++)
+    for (int i = 0; i < 5 * c.dim; i++) {
+      CHECK(all.key_cache[l].data[i] == one.key_cache[l].data[i]);
+      CHECK(all.value_cache[l].data[i] == one.value_cache[l].data[i]);
+    }
+  run_state_free(&one);
+  run_state_free(&all);
   free_transformer(&t);
   return report("test_transformer");
 }
