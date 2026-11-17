@@ -61,20 +61,20 @@ $(BUILD)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-# Any example / benchmark -> build/<mode>/bin/<name>
+# Any example -> build/<mode>/bin/<path>
 $(BUILD)/bin/%: $(BUILD)/%.o $(OBJS)
 	@mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 EXAMPLES := $(wildcard examples/*.c examples/ops/*.c)
 examples: $(EXAMPLES:%.c=$(BUILD)/bin/%)
-all: examples $(BUILD)/bin/benchmark
+all: examples
 
 run: $(BUILD)/bin/$(basename $(EX)) $(DATA)
 	@test -n "$(EX)" || { echo "Usage: make run EX=examples/<file>.c"; exit 1; }
 	./$< $(ARGS)
 
-bench: $(BUILD)/bin/benchmark
+bench: $(BUILD)/bin/examples/ops/matmul_bench
 	./$<
 
 TESTS := $(patsubst %.c,$(BUILD)/bin/%,$(wildcard tests/*.c))
