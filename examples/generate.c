@@ -1,4 +1,5 @@
 #include "ops.h"
+#include "ops_kernels.h"
 #include "tokenizer.h"
 #include "transformer.h"
 #include <omp.h>
@@ -18,7 +19,33 @@ static int *encode_prompt(Tokenizer *tok, const char *prompt, int *n) {
   return tokens;
 }
 
-static int decode(Transformer *t, RunState *state, Tokenizer *tok, int token, int pos,
+#define TOP_MAX 10
+
+static void print_top(Tokenizer *tok, Matrix logits, int k) {
+  int n = mat_size(logits);
+  float *p = malloc(n * sizeof(float));
+  memcpy(p, logits.data, n * sizeof(float));
+  kernel_softmax_row(p, n); // probabilities; logits stay untouched
+  int top[TOP_MAX];
+  int found = 0;
+  for (int i = 0; i < n; i++) {
+    if (found == k && p[i] <= p[top[k - 1]])
+      continue;
+    int j = found < k ? found++ : k - 1;
+    while (j > 0 && p[i] > p[top[j - 1]]) { // insertion: shift weaker ones down
+      top[j] = top[j - 1];
+      j--;
+    }
+    top[j] = i;
+  }
+  fprintf(stderr, "  <-");
+  for (int j = 0; j < found; j++)
+    fprintf(stderr, " %s %.0f%%%s", tokenizer_decode(tok, top[j]), 100 * p[top[j]],
+            j + 1 < found ? " |" : "\n");
+  free(p);
+}
+
+static int decode(Transformer *t, RunState *state, Tokenizer *tok, int token, int pos, int top_k,
                   int *n_decode) {
   int generated = 0;
   *n_decode = 0;
@@ -27,6 +54,8 @@ static int decode(Transformer *t, RunState *state, Tokenizer *tok, int token, in
     if (next == 1 || next == 2) // BOS separates stories in TinyStories, EOS ends text
       break;
     print_token(tok, token, next);
+    if (top_k > 0)
+      print_top(tok, state->logits, top_k);
     generated++;
     if (pos == t->config.seq_len) // KV cache full
       break;
@@ -91,8 +120,11 @@ int main(int argc, char **argv) {
   double start = omp_get_wtime();
   prefill(&t, &state, prompt_tokens, n_prompt);
   double prefill_end = omp_get_wtime();
+  int top_k = getenv("TOPK") ? atoi(getenv("TOPK")) : 0;
+  if (top_k > TOP_MAX)
+    top_k = TOP_MAX;
   int n_decode;
-  int generated = decode(&t, &state, &tok, prompt_tokens[n_prompt - 1], n_prompt, &n_decode);
+  int generated = decode(&t, &state, &tok, prompt_tokens[n_prompt - 1], n_prompt, top_k, &n_decode);
   double end = omp_get_wtime();
 
   print_stats(&t, &state, n_prompt, n_decode, generated, prefill_end - start, end - prefill_end);
