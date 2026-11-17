@@ -160,13 +160,14 @@ static void print_stats(Transformer *t, RunState *state, int n_prompt, int n_dec
 }
 
 // Usage: generate [naive|omp|blas] [prompt] [attention_dump.bin]
+// Env: MODEL (models/stories15M.bin), TEMP, SEED, SAMPLE_K, TOP_P, TOPK
 int main(int argc, char **argv) {
   if (argc > 1 && strcmp(argv[1], "omp") == 0)
     ops_set_backend(BACKEND_OMP);
   if (argc > 1 && strcmp(argv[1], "blas") == 0)
     ops_set_backend(BACKEND_BLAS);
   Transformer t;
-  load_transformer(&t, "models/stories15M.bin");
+  load_transformer(&t, getenv("MODEL") ? getenv("MODEL") : "models/stories15M.bin");
   Tokenizer tok;
   tokenizer_load(&tok, "models/tokenizer.bin", t.config.vocab_size);
   RunState state = run_state_create(t.config);

@@ -9,6 +9,7 @@
 #   make BLAS=0 run EX=...             build without OpenBLAS
 #   make data / make mnist             download datasets
 #   make model                         download TinyStories 15M + tokenizer
+#   make model SIZE=110M               download TinyStories 42M or 110M (same tokenizer)
 #   make clean
 
 CC    ?= gcc
@@ -41,7 +42,12 @@ PIMA_CSV   := pima-indians-diabetes.csv
 DATA       := $(BOSTON_CSV) $(PIMA_CSV)
 
 MODEL_DIR  := models
-MODEL      := $(MODEL_DIR)/stories15M.bin
+SIZE       ?= 15M
+SIZES      := 15M 42M 110M
+ifeq ($(filter $(SIZE),$(SIZES)),)
+$(error SIZE must be one of: $(SIZES))
+endif
+MODEL_BIN  := $(MODEL_DIR)/stories$(SIZE).bin
 TOKENIZER  := $(MODEL_DIR)/tokenizer.bin
 
 .PHONY: all run bench test test-all format format-check examples data mnist model clean help
@@ -73,7 +79,7 @@ bench: $(BUILD)/bin/benchmark
 
 TESTS := $(patsubst %.c,$(BUILD)/bin/%,$(wildcard tests/*.c))
 
-test: $(TESTS) $(MODEL) $(TOKENIZER)
+test: $(TESTS) $(MODEL_BIN) $(TOKENIZER)
 	@fail=0; for t in $(TESTS); do ./$$t || fail=1; done; exit $$fail
 
 test-all:
@@ -101,11 +107,11 @@ mnist: mnist_train.csv mnist_test.csv
 mnist_%.csv:
 	wget -q --show-progress https://pjreddie.com/media/files/$@ -O $@
 
-model: $(MODEL) $(TOKENIZER)
+model: $(MODEL_BIN) $(TOKENIZER)
 
-$(MODEL):
+$(MODEL_DIR)/stories%.bin:
 	@mkdir -p $(MODEL_DIR)
-	wget -q --show-progress https://huggingface.co/karpathy/tinyllamas/resolve/main/stories15M.bin -O $@
+	wget -q --show-progress https://huggingface.co/karpathy/tinyllamas/resolve/main/stories$*.bin -O $@
 
 $(TOKENIZER):
 	@mkdir -p $(MODEL_DIR)
