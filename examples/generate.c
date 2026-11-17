@@ -21,12 +21,8 @@ static int *encode_prompt(Tokenizer *tok, const char *prompt, int *n) {
 
 #define TOP_MAX 10
 
-static void print_top(Tokenizer *tok, Matrix logits, int k) {
-  int n = mat_size(logits);
-  float *p = malloc(n * sizeof(float));
-  memcpy(p, logits.data, n * sizeof(float));
-  kernel_softmax_row(p, n); // probabilities; logits stay untouched
-  int top[TOP_MAX];
+// indices of the k largest p, best first; returns how many were found
+static int top_indices(float *p, int n, int k, int *top) {
   int found = 0;
   for (int i = 0; i < n; i++) {
     if (found == k && p[i] <= p[top[k - 1]])
@@ -38,6 +34,16 @@ static void print_top(Tokenizer *tok, Matrix logits, int k) {
     }
     top[j] = i;
   }
+  return found;
+}
+
+static void print_top(Tokenizer *tok, Matrix logits, int k) {
+  int n = mat_size(logits);
+  float *p = malloc(n * sizeof(float));
+  memcpy(p, logits.data, n * sizeof(float));
+  kernel_softmax_row(p, n); // probabilities; logits stay untouched
+  int top[TOP_MAX];
+  int found = top_indices(p, n, k, top);
   fprintf(stderr, "  <-");
   for (int j = 0; j < found; j++)
     fprintf(stderr, " %s %.0f%%%s", tokenizer_decode(tok, top[j]), 100 * p[top[j]],
@@ -45,7 +51,7 @@ static void print_top(Tokenizer *tok, Matrix logits, int k) {
   free(p);
 }
 
-static int sample(Matrix logits, float temperature) {
+static int sample(Matrix logits, float temperature, int k) {
   if (temperature == 0.0f)
     return argmax(logits);
   int n = mat_size(logits);
@@ -53,7 +59,20 @@ static int sample(Matrix logits, float temperature) {
   for (int i = 0; i < n; i++)
     p[i] = logits.data[i] / temperature;
   kernel_softmax_row(p, n);
-  float r = rand() / (RAND_MAX + 1.0f); // [0, 1)
+  float total = 1.0f;
+  if (k > 0 && k < n) {
+    int *top = malloc(k * sizeof(int));
+    top_indices(p, n, k, top);
+    float cutoff = p[top[k - 1]]; // k-th largest
+    total = 0.0f;
+    for (int i = 0; i < n; i++) { // drop the tail, sum the rest
+      if (p[i] < cutoff)
+        p[i] = 0.0f;
+      total += p[i];
+    }
+    free(top);
+  }
+  float r = total * (rand() / (RAND_MAX + 1.0f)); // [0, total)
   float sum = 0.0f;
   int next = n - 1; // fallback if rounding keeps sum below r
   for (int i = 0; i < n; i++) {
@@ -68,11 +87,11 @@ static int sample(Matrix logits, float temperature) {
 }
 
 static int decode(Transformer *t, RunState *state, Tokenizer *tok, int token, int pos, int top_k,
-                  float temperature, int *n_decode) {
+                  float temperature, int sample_k, int *n_decode) {
   int generated = 0;
   *n_decode = 0;
   while (1) {
-    int next = sample(state->logits, temperature);
+    int next = sample(state->logits, temperature, sample_k);
     if (next == 1 || next == 2) // BOS separates stories in TinyStories, EOS ends text
       break;
     print_token(tok, token, next);
@@ -146,10 +165,11 @@ int main(int argc, char **argv) {
   if (top_k > TOP_MAX)
     top_k = TOP_MAX;
   float temperature = getenv("TEMP") ? atof(getenv("TEMP")) : 0.0f;
+  int sample_k = getenv("SAMPLE_K") ? atoi(getenv("SAMPLE_K")) : 0;
   srand(getenv("SEED") ? atoi(getenv("SEED")) : 42);
   int n_decode;
   int generated = decode(&t, &state, &tok, prompt_tokens[n_prompt - 1], n_prompt, top_k,
-                         temperature, &n_decode);
+                         temperature, sample_k, &n_decode);
   double end = omp_get_wtime();
 
   print_stats(&t, &state, n_prompt, n_decode, generated, prefill_end - start, end - prefill_end);
