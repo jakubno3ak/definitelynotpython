@@ -51,7 +51,17 @@ static void print_top(Tokenizer *tok, Matrix logits, int k) {
   free(p);
 }
 
-static int sample(Matrix logits, float temperature, int k) {
+static int float_desc(const void *a, const void *b) {
+  float x = *(const float *)a;
+  float y = *(const float *)b;
+  if (x > y)
+    return -1; // x goes first
+  if (x < y)
+    return 1;
+  return 0;
+}
+
+static int sample(Matrix logits, float temperature, int k, float top_p) {
   if (temperature == 0.0f)
     return argmax(logits);
   int n = mat_size(logits);
@@ -59,18 +69,37 @@ static int sample(Matrix logits, float temperature, int k) {
   for (int i = 0; i < n; i++)
     p[i] = logits.data[i] / temperature;
   kernel_softmax_row(p, n);
-  float total = 1.0f;
+  float cutoff = 0.0f;
   if (k > 0 && k < n) {
     int *top = malloc(k * sizeof(int));
     top_indices(p, n, k, top);
-    float cutoff = p[top[k - 1]]; // k-th largest
+    cutoff = p[top[k - 1]]; // k-th largest
+    free(top);
+  }
+  if (top_p > 0.0f && top_p < 1.0f) {
+    float *sorted = malloc(n * sizeof(float));
+    float floor = (1.0f - top_p) / (n - 1); // smaller than this can never make the nucleus
+    int m = 0;
+    for (int i = 0; i < n; i++)
+      if (p[i] >= floor)
+        sorted[m++] = p[i];
+    qsort(sorted, m, sizeof(float), float_desc);
+    float acc = 0.0f;
+    int kept = 0;
+    while (kept < m && acc < top_p) // shortest prefix whose mass reaches top_p
+      acc += sorted[kept++];
+    if (sorted[kept - 1] > cutoff)
+      cutoff = sorted[kept - 1];
+    free(sorted);
+  }
+  float total = 1.0f;
+  if (cutoff > 0.0f) {
     total = 0.0f;
     for (int i = 0; i < n; i++) { // drop the tail, sum the rest
       if (p[i] < cutoff)
         p[i] = 0.0f;
       total += p[i];
     }
-    free(top);
   }
   float r = total * (rand() / (RAND_MAX + 1.0f)); // [0, total)
   float sum = 0.0f;
@@ -87,11 +116,11 @@ static int sample(Matrix logits, float temperature, int k) {
 }
 
 static int decode(Transformer *t, RunState *state, Tokenizer *tok, int token, int pos, int top_k,
-                  float temperature, int sample_k, int *n_decode) {
+                  float temperature, int sample_k, float top_p, int *n_decode) {
   int generated = 0;
   *n_decode = 0;
   while (1) {
-    int next = sample(state->logits, temperature, sample_k);
+    int next = sample(state->logits, temperature, sample_k, top_p);
     if (next == 1 || next == 2) // BOS separates stories in TinyStories, EOS ends text
       break;
     print_token(tok, token, next);
@@ -166,10 +195,11 @@ int main(int argc, char **argv) {
     top_k = TOP_MAX;
   float temperature = getenv("TEMP") ? atof(getenv("TEMP")) : 0.0f;
   int sample_k = getenv("SAMPLE_K") ? atoi(getenv("SAMPLE_K")) : 0;
+  float top_p = getenv("TOP_P") ? atof(getenv("TOP_P")) : 0.0f;
   srand(getenv("SEED") ? atoi(getenv("SEED")) : 42);
   int n_decode;
   int generated = decode(&t, &state, &tok, prompt_tokens[n_prompt - 1], n_prompt, top_k,
-                         temperature, sample_k, &n_decode);
+                         temperature, sample_k, top_p, &n_decode);
   double end = omp_get_wtime();
 
   print_stats(&t, &state, n_prompt, n_decode, generated, prefill_end - start, end - prefill_end);
