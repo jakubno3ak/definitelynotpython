@@ -45,12 +45,34 @@ static void print_top(Tokenizer *tok, Matrix logits, int k) {
   free(p);
 }
 
+static int sample(Matrix logits, float temperature) {
+  if (temperature == 0.0f)
+    return argmax(logits);
+  int n = mat_size(logits);
+  float *p = malloc(n * sizeof(float));
+  for (int i = 0; i < n; i++)
+    p[i] = logits.data[i] / temperature;
+  kernel_softmax_row(p, n);
+  float r = rand() / (RAND_MAX + 1.0f); // [0, 1)
+  float sum = 0.0f;
+  int next = n - 1; // fallback if rounding keeps sum below r
+  for (int i = 0; i < n; i++) {
+    sum += p[i];
+    if (r < sum) {
+      next = i;
+      break;
+    }
+  }
+  free(p);
+  return next;
+}
+
 static int decode(Transformer *t, RunState *state, Tokenizer *tok, int token, int pos, int top_k,
-                  int *n_decode) {
+                  float temperature, int *n_decode) {
   int generated = 0;
   *n_decode = 0;
   while (1) {
-    int next = argmax(state->logits);
+    int next = sample(state->logits, temperature);
     if (next == 1 || next == 2) // BOS separates stories in TinyStories, EOS ends text
       break;
     print_token(tok, token, next);
@@ -123,8 +145,11 @@ int main(int argc, char **argv) {
   int top_k = getenv("TOPK") ? atoi(getenv("TOPK")) : 0;
   if (top_k > TOP_MAX)
     top_k = TOP_MAX;
+  float temperature = getenv("TEMP") ? atof(getenv("TEMP")) : 0.0f;
+  srand(getenv("SEED") ? atoi(getenv("SEED")) : 42);
   int n_decode;
-  int generated = decode(&t, &state, &tok, prompt_tokens[n_prompt - 1], n_prompt, top_k, &n_decode);
+  int generated = decode(&t, &state, &tok, prompt_tokens[n_prompt - 1], n_prompt, top_k,
+                         temperature, &n_decode);
   double end = omp_get_wtime();
 
   print_stats(&t, &state, n_prompt, n_decode, generated, prefill_end - start, end - prefill_end);
